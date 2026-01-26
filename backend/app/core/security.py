@@ -7,9 +7,9 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
-# Use bcrypt_sha256 so long passwords are safely pre-hashed before bcrypt,
-# avoiding the 72-byte password limit while keeping bcrypt security.
-pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
+# Use PBKDF2-HMAC-SHA256 for password hashing to avoid bcrypt backend
+# issues on some platforms while still providing strong, salted hashes.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
