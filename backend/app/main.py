@@ -18,6 +18,7 @@ from app.api.v0.routers import (
     notification,
     education,
     health,
+    goal_progress,
 )
 from app.core.config import settings
 from app.core.middleware import setup_middleware
@@ -139,6 +140,10 @@ Authorization: Bearer <your_token_here>
                 "description": "Educational content and resources"
             },
             {
+                "name": "goal-progress",
+                "description": "Goal progress tracking and history"
+            },
+            {
                 "name": "health",
                 "description": "System health and monitoring"
             }
@@ -217,6 +222,12 @@ Authorization: Bearer <your_token_here>
         dashboard.router,
         prefix=settings.API_V0_PREFIX,
         tags=["Dashboard"],
+        dependencies=[Depends(get_current_user)],
+    )
+    app.include_router(
+        goal_progress.router,
+        prefix=settings.API_V0_PREFIX,
+        tags=["Goal Progress"],
         dependencies=[Depends(get_current_user)],
     )
     app.include_router(

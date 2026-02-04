@@ -76,10 +76,13 @@ def client_fixture(session: Session) -> Generator[TestClient, None, None]:
     Yields:
         FastAPI test client
     """
+    from app.api.v0.deps import get_db
+    
     def get_session_override():
         return session
     
     app.dependency_overrides[get_session] = get_session_override
+    app.dependency_overrides[get_db] = get_session_override
     
     with TestClient(app) as client:
         yield client

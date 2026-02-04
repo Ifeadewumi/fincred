@@ -107,3 +107,27 @@ class GoalUpdate(SQLModel):
     primary_flag: Optional[bool] = None
     why_text: Optional[str] = None
     status: Optional[GoalStatus] = None  # Use Enum
+
+
+# Import here to avoid circular dependency
+from app.schemas.tracking import ProgressStatus
+
+
+class GoalWithProgress(GoalRead):
+    """Goal with progress information."""
+    current_balance: Optional[float] = Field(
+        default=None,
+        description="Current balance towards goal"
+    )
+    progress_percentage: float = Field(
+        default=0.0,
+        description="Progress as percentage (0-100)"
+    )
+    status_label: ProgressStatus = Field(
+        default=ProgressStatus.NOT_STARTED,
+        description="Progress status (on_track, slightly_behind, off_track, etc.)"
+    )
+    latest_progress_date: Optional[datetime] = Field(
+        default=None,
+        description="Date of most recent progress update"
+    )

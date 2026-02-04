@@ -129,20 +129,34 @@ def get_check_ins_for_user(
     return [CheckInRead.model_validate(ci) for ci in check_ins]
 
 
-def create_new_check_in(db: Session, user: User, check_in_in: CheckInCreate) -> CheckInRead:
-    """Creates a new check-in record for a user."""
+def create_new_check_in(db: Session, user: User, check_in_in: CheckInCreate) -> dict:
+    """
+    Creates a new check-in record for a user.
+    Returns check-in data along with current streak information.
+    """
     try:
         check_in = CheckIn(user_id=user.id, **check_in_in.dict())
         db.add(check_in)
         db.commit()
         db.refresh(check_in)
-        return CheckInRead.model_validate(check_in)
+        
+        # Calculate streak after check-in
+        from app.services.progress_service import calculate_streak
+        current_streak, longest_streak = calculate_streak(user.id, db)
+        
+        return {
+            "checkin": CheckInRead.model_validate(check_in),
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "message": f"Check-in recorded! Current streak: {current_streak} week(s)"
+        }
     except Exception as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while creating the check-in: {e}",
         )
+
 
 
 def get_check_in_by_id(db: Session, user: User, check_in_id: UUID) -> CheckInRead:

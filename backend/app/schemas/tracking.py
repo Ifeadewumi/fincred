@@ -8,6 +8,22 @@ from pydantic import Field
 from sqlmodel import SQLModel
 
 
+# --- Enums for Progress Status ---
+class ProgressStatus(str, Enum):
+    ON_TRACK = "on_track"
+    SLIGHTLY_BEHIND = "slightly_behind"
+    OFF_TRACK = "off_track"
+    COMPLETED = "completed"
+    NOT_STARTED = "not_started"
+
+
+class MilestoneType(str, Enum):
+    QUARTER = "25_percent"
+    HALF = "50_percent"
+    THREE_QUARTERS = "75_percent"
+    COMPLETE = "100_percent"
+
+
 # --- Enums for GoalProgress ---
 class GoalProgressSource(str, Enum):
     MANUAL_ENTRY = "manual_entry"
@@ -86,3 +102,14 @@ class CheckInUpdate(SQLModel):
     spending_vs_plan: Optional[CheckInSpendingVsPlan] = None
     mood_score: Optional[CheckInMoodScore] = None
     comment: Optional[str] = None
+
+
+# --- Enhanced Progress Schemas ---
+class GoalProgressWithStatus(GoalProgressRead):
+    """Goal progress with calculated status and percentage."""
+    progress_percentage: float = Field(
+        description="Progress as percentage (0-100)"
+    )
+    status: ProgressStatus = Field(
+        description="Progress status relative to timeline"
+    )
