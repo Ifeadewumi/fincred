@@ -161,6 +161,11 @@ High-level cardinalities:
 - ActionPlan 1 — * Notification/NudgeSchedule (for reminders)
 - EducationSnippet is standalone and selected by context.
 
+Implementation notes:
+
+- Frequently queried columns (e.g., `user_id`, `goal.status`) should be indexed for performance.
+- For entities like `Goal` and `ActionPlan`, consider soft-delete flags (e.g., `status` or `deleted_at`) instead of hard deletes to preserve history.
+
 ## ASCII ERD sketch
 
 ```text

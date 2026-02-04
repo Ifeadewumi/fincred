@@ -1,8 +1,8 @@
 # app/api/v0/deps.py
 from typing import Generator
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt, JWTError
 from sqlmodel import Session, select
 
@@ -10,8 +10,9 @@ from app.core.config import settings
 from app.db.session import get_session
 from app.models.user import User
 
-# Token URL should point to the versioned login endpoint
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v0/auth/login")
+# Define the security scheme.
+# HTTPBearer() will create a simple UI for pasting a bearer token.
+bearer_scheme = HTTPBearer()
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -19,15 +20,20 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    auth: HTTPAuthorizationCredentials = Security(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
+    """
+    Dependency to get the current user from a JWT bearer token.
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        # The token is in the 'credentials' attribute of the auth object
+        token = auth.credentials
         payload = jwt.decode(
             token,
             settings.JWT_SECRET_KEY,

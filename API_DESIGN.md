@@ -2,7 +2,9 @@
 
 This document outlines a high-level REST-style API for the FinCred MVP.
 
-Base URL example: `/api/v1`.
+Base URL: `/api/v0`.
+
+All endpoints are versioned under `/api/v0/...` for the initial MVP; breaking changes in the future will use `/api/v1`, `/api/v2`, etc.
 
 ## 1. Authentication & user profile
 
@@ -12,6 +14,10 @@ Create a new user.
 **Request body (JSON)**
 - `email` (string)
 - `password` (string)
+
+**Validation**
+- `email` must be a valid email address and unique per user.
+- `password` must meet minimum strength rules (e.g., length ≥ 8 and ≤ 128; additional complexity rules may be added later).
 
 **Response**
 - `user` (object)
@@ -47,6 +53,9 @@ Update profile and preferences.
 - `preferred_checkin_day_of_week`
 - `persona_hint`
 
+**Validation**
+- All fields are optional; when provided, they must be within allowed value sets (e.g., supported currencies, reasonable reminder frequencies).
+
 ---
 
 ## 2. Onboarding – financial snapshot
@@ -56,6 +65,10 @@ Get the current basic snapshot (income, expenses, debts, savings).
 
 ### PUT `/snapshot`
 Create or update snapshot in a single call (simple MVP option).
+
+**Validation**
+- Income, expenses, debt balances, and savings balances must be non-negative numbers.
+- Interest rates must be within a reasonable range (e.g., 0–1 for decimal or 0–100 for percentages).
 
 **Request body (example)**
 ```json
@@ -94,6 +107,11 @@ Create a new goal.
 - `priority`
 - `primary_flag` (optional)
 
+**Validation**
+- `target_amount` must be greater than 0.
+- `target_date` must be in the future.
+- The number of active goals per user may be capped (e.g., 5) to keep plans manageable.
+
 **Response**
 - Created goal object.
 
@@ -105,6 +123,9 @@ Update a goal (e.g., change date, amount, priority, status, why_text).
 
 ### DELETE `/goals/{goal_id}`
 Soft-delete or cancel a goal.
+
+**Behavior**
+- Prefer marking the goal as `cancelled`/`inactive` (soft delete) rather than removing it entirely, to preserve history.
 
 ---
 
@@ -186,12 +207,17 @@ Return a compact view of top goals and current status.
 ### GET `/goals/{goal_id}/progress`
 List historical progress records for a goal.
 
+Supports optional pagination parameters similar to `/goals`.
+
 ### POST `/goals/{goal_id}/progress`
 Create a new progress record (manual update).
 
 **Request body**
 - `current_balance`
 - `note` (optional, e.g., "unexpected car repair")
+
+**Validation**
+- `current_balance` must be non-negative.
 
 ---
 
@@ -208,6 +234,9 @@ Create a new check-in.
 - `spending_vs_plan` (under, on, over)
 - `mood_score` (1–5)
 - `comment` (optional)
+
+**Validation**
+- `mood_score` must be an integer within the expected range (e.g., 1–5).
 
 **Response**
 - Check-in record.
@@ -290,8 +319,32 @@ Log a client-side analytics event.
 ## 10. Authentication & security considerations
 
 - All endpoints (except `/auth/register`, `/auth/login`) require an auth token.
-- Use HTTPS everywhere.
-- Rate-limit auth and write-heavy endpoints.
+- Use HTTPS everywhere in non-local environments.
+- Rate-limit auth and write-heavy endpoints to mitigate brute-force and abuse.
+- JWT access tokens include expirations; clients should refresh/re-authenticate as needed.
 - For MVP, scope tokens per user only (no multi-tenant roles yet).
+- Secrets (JWT keys, DB passwords, email API keys) must be stored only in environment configuration, not in source control.
+
+## 11. Error responses
+
+To keep error handling consistent:
+
+- Validation errors may use FastAPI’s default 422 format.
+- Other errors should generally return a JSON body like:
+
+  ```json
+  {
+    "detail": "Human-readable message",
+    "code": "OPTIONAL_ERROR_CODE"
+  }
+  ```
+
+Typical status codes:
+
+- `400` – bad input / validation errors not covered by 422.
+- `401` – unauthenticated (missing/invalid token).
+- `403` – forbidden (reserved for future roles/permissions).
+- `404` – resource not found (goal, action, notification, etc.).
+- `409` – conflicts (e.g., duplicate email on registration).
 
 This design is intentionally minimal and focused on enabling the core flows: onboarding, planning, action setup, check-ins, and nudges. You can refine payloads and add pagination/filters as the product evolves.

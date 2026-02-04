@@ -105,6 +105,8 @@ For MVP, **optimize primarily for persona #2**, while still supporting #1 and #3
 
 **Requirements:**
 - Create account (email + password, or OAuth provider).
+  - Email must be a valid email address and unique per account.
+  - Passwords must meet minimum strength rules (e.g., length ≥ 8 and ≤ 128, with additional complexity rules added over time).
 - Collect:
   - Age range, country (for currency), employment status (optional).
   - Net monthly income (or salary / frequency).
@@ -200,6 +202,11 @@ For MVP, **optimize primarily for persona #2**, while still supporting #1 and #3
 - Drive consistency through AI-powered personalization without overwhelming users.
 - Deliver hyper-contextual nudges using behavioral pattern recognition and natural language generation.
 
+**Principles:**
+- Respect user attention with sensible caps on nudge frequency (per day/week).
+- Give users clear controls to adjust or opt out of specific notification types.
+- Avoid guilt-based or manipulative messaging; focus on supportive, actionable guidance.
+
 **Requirements:**
 - **AI-generated weekly summary**:
   - Personalized goals overview with progress insights
@@ -257,6 +264,9 @@ For MVP, **optimize primarily for persona #2**, while still supporting #1 and #3
   - All user data encrypted at rest and in transit.
   - No collection of bank credentials in MVP.
   - Clear positioning as **educational/coaching**, not regulated investment advice.
+  - Secrets (JWT signing keys, database credentials, email API keys) are supplied only via environment configuration and never committed to source control.
+  - Authentication endpoints are rate-limited to reduce brute-force and credential-stuffing risk.
+  - JWT access tokens include expirations; refresh/reauthentication strategy can be tightened for production deployments.
 - **Performance:**
   - Main screens should load within ~2 seconds on average mobile connections.
 - **Reliability:**

@@ -8,7 +8,9 @@
 - As a user, I can set basic preferences (country/currency, reminder frequency).
 
 **Key components**
-- Email/password auth (and/or OAuth).
+- Email/password auth (and/or OAuth), with:
+  - Email format validation and uniqueness per user.
+  - Password strength rules (e.g., minimum length and reasonable maximum).
 - Profile model: `user`, `country`, `currency`, `reminder_frequency`, `persona_hint` (new grad / FIRE / etc.).
 
 ---
@@ -133,7 +135,8 @@
 
 **Scope:**
 - Set up repo, CI, environments.
-- Implement authentication and user profile.
+- Implement authentication and user profile, including input validation and basic rate limiting on auth endpoints.
+- Add initial logging and a small test suite around auth and config loading.
 - Barebones home screen (e.g., “no goals yet, create one”).
 
 **Deliverable:** Users can sign up/log in and see a placeholder home page.

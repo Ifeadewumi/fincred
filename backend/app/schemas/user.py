@@ -1,22 +1,25 @@
 # app/schemas/user.py
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
+from pydantic import EmailStr
 from sqlmodel import SQLModel
 
 
 class UserBase(SQLModel):
-    email: str
+    email: EmailStr
     is_active: bool = True
+    is_verified: bool = False
 
 
 class UserCreate(SQLModel):
-    email: str
+    email: EmailStr
     password: str
 
 
 class UserRead(UserBase):
-    id: int
+    id: UUID
     created_at: datetime
 
 
@@ -32,3 +35,13 @@ class ProfileBase(SQLModel):
 
 class ProfileUpdate(ProfileBase):
     pass
+
+
+# NEW SCHEMAS
+class ProfileRead(ProfileBase):
+    id: UUID
+    user_id: UUID
+
+
+class UserReadWithProfile(UserRead):
+    profile: Optional[ProfileRead] = None
