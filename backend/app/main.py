@@ -17,6 +17,7 @@ from app.api.v0.routers import (
     dashboard,
     notification,
     education,
+    health,
 )
 from app.core.config import settings
 from app.core.middleware import setup_middleware
@@ -110,6 +111,7 @@ def create_app() -> FastAPI:
     # Public routers (no authentication required)
     app.include_router(auth.router, prefix=settings.API_V0_PREFIX, tags=["Authentication"])
     app.include_router(education.router, prefix=settings.API_V0_PREFIX, tags=["Education"])
+    app.include_router(health.router, prefix=settings.API_V0_PREFIX, tags=["Health"])
     
     # Protected routers (authentication required)
     # The get_current_user dependency enables the "Authorize" button in Swagger UI
