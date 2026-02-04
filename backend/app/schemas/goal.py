@@ -45,6 +45,7 @@ class GoalCreate(GoalBase):
 
 class GoalRead(GoalBase):
     id: UUID
+    user_id: UUID  # Add user_id so tests/services can verify ownership
     status: GoalStatus  # Use Enum
     created_at: datetime
     updated_at: datetime

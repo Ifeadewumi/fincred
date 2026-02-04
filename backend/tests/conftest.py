@@ -107,7 +107,7 @@ def test_user_fixture(session: Session) -> User:
     # Create user
     user = User(
         email="test@example.com",
-        hashed_password=hash_password("testpassword123"),
+        password_hash=hash_password("testpassword123"),
         is_verified=True,
         is_active=True
     )
@@ -185,7 +185,7 @@ def test_goal_fixture(session: Session, test_user: User) -> Goal:
     
     goal = Goal(
         user_id=test_user.id,
-        type=GoalType.SAVINGS,
+        type=GoalType.SHORT_TERM_SAVING,
         name="Emergency Fund",
         target_amount=10000.0,
         target_date=date.today() + timedelta(days=365),
@@ -226,7 +226,7 @@ def create_user_fixture(session: Session):
     ) -> User:
         user = User(
             email=email,
-            hashed_password=hash_password(password),
+            password_hash=hash_password(password),
             is_verified=is_verified,
             is_active=is_active
         )
@@ -270,7 +270,7 @@ def create_goal_fixture(session: Session):
         
         goal_data = {
             "user_id": user_id,
-            "type": GoalType.SAVINGS,
+            "type": GoalType.SHORT_TERM_SAVING,
             "name": name,
             "target_amount": target_amount,
             "target_date": date.today() + timedelta(days=365),

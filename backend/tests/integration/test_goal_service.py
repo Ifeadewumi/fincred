@@ -91,7 +91,7 @@ class TestCreateNewGoal:
     def test_create_goal_success(self, session: Session, test_user: User):
         """Test successful goal creation."""
         goal_data = GoalCreate(
-            type=GoalType.SAVINGS,
+            type=GoalType.SHORT_TERM_SAVING,
             name="Emergency Fund",
             target_amount=10000.0,
             target_date=date.today() + timedelta(days=365),
@@ -111,7 +111,7 @@ class TestCreateNewGoal:
     def test_create_goal_past_date_fails(self, session: Session, test_user: User):
         """Test that creating goal with past date fails."""
         goal_data = GoalCreate(
-            type=GoalType.SAVINGS,
+            type=GoalType.SHORT_TERM_SAVING,
             name="Test Goal",
             target_amount=5000.0,
             target_date=date.today() - timedelta(days=1),  # Yesterday
@@ -126,7 +126,7 @@ class TestCreateNewGoal:
     def test_create_goal_today_date_fails(self, session: Session, test_user: User):
         """Test that creating goal with today's date fails."""
         goal_data = GoalCreate(
-            type=GoalType.SAVINGS,
+            type=GoalType.SHORT_TERM_SAVING,
             name="Test Goal",
             target_amount=5000.0,
             target_date=date.today(),  # Today
@@ -153,7 +153,7 @@ class TestCreateNewGoal:
         
         # Try to create 6th goal
         goal_data = GoalCreate(
-            type=GoalType.SAVINGS,
+            type=GoalType.SHORT_TERM_SAVING,
             name="Goal 6",
             target_amount=1000.0,
             target_date=date.today() + timedelta(days=365),
