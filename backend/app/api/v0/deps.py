@@ -1,7 +1,7 @@
 # app/api/v0/deps.py
-from typing import Generator
+from typing import Generator, Annotated
 
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Security, status, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt, JWTError
 from sqlmodel import Session, select
@@ -49,3 +49,22 @@ def get_current_user(
     if not user:
         raise credentials_exception
     return user
+
+
+def get_pagination(
+    limit: Annotated[int, Query(ge=1, le=100, description="Number of items per page")] = 20,
+    offset: Annotated[int, Query(ge=0, description="Number of items to skip")] = 0
+) -> dict:
+    """
+    Reusable pagination dependency.
+    
+    Use in endpoints:
+        @router.get("/items")
+        async def list_items(pagination: Annotated[dict, Depends(get_pagination)]):
+            limit = pagination["limit"]
+            offset = pagination["offset"]
+    
+    Returns:
+        dict with 'limit' and 'offset' keys
+    """
+    return {"limit": limit, "offset": offset}

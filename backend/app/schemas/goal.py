@@ -30,17 +30,64 @@ class GoalStatus(str, Enum):
 
 
 class GoalBase(SQLModel):
-    type: GoalType  # Use Enum
-    name: str
-    target_amount: float
-    target_date: date
-    priority: GoalPriority  # Use Enum
-    primary_flag: bool = False
-    why_text: Optional[str] = None
+    """Base goal model with common fields."""
+    type: GoalType = Field(
+        description="Type of financial goal"
+    )
+    name: str = Field(
+        min_length=1,
+        max_length=100,
+        description="Goal name (1-100 characters)"
+    )
+    target_amount: float = Field(
+        gt=0,
+        description="Target amount to save or pay off (must be positive)"
+    )
+    target_date: date = Field(
+        description="Target completion date (must be in the future)"
+    )
+    priority: GoalPriority = Field(
+        description="Goal priority level"
+    )
+    primary_flag: bool = Field(
+        default=False,
+        description="Whether this is the user's primary/main goal"
+    )
+    why_text: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="Personal motivation for this goal (max 500 characters)"
+    )
 
 
 class GoalCreate(GoalBase):
-    pass
+    """Schema for creating a new goal."""
+    
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "type": "short_term_saving",
+                    "name": "Emergency Fund",
+                    "target_amount": 10000.0,
+                    "target_date": "2025-12-31",
+                    "priority": "High",
+                    "primary_flag": True,
+                    "why_text": "Build 6 months of expenses for financial security"
+                },
+                {
+                    "type": "debt_payoff",
+                    "name": "Credit Card Debt",
+                    "target_amount": 5000.0,
+                    "target_date": "2025-06-30",
+                    "priority": "High",
+                    "primary_flag": False,
+                    "why_text": "Become debt-free and improve credit score"
+                }
+            ]
+        }
+    }
+
 
 
 class GoalRead(GoalBase):

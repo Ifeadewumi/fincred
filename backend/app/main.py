@@ -74,13 +74,75 @@ def create_app() -> FastAPI:
         Configured FastAPI application instance
     """
     app = FastAPI(
-        title=settings.PROJECT_NAME,
-        version=settings.VERSION,
-        description="AI-powered financial coaching platform helping users achieve their financial goals through personalized planning and behavioral nudges.",
         lifespan=lifespan,
+        title="FinCred API",
+        description="""
+## Financial Goal Setting and Tracking Platform
+
+FinCred helps users set, track, and achieve their financial goals through:
+
+* **Goal Management**: Create and track multiple financial goals
+* **Action Plans**: Get personalized steps to reach your goals
+* **Progress Tracking**: Monitor your progress with check-ins
+* **Smart Nudges**: Receive timely reminders and encouragement
+* **Financial Education**: Access curated educational content
+
+### Authentication
+
+All endpoints (except /auth/*) require a Bearer token obtained via login.
+
+Send the token in the `Authorization` header:
+```
+Authorization: Bearer <your_token_here>
+```
+        """,
+        version=settings.VERSION,
+        contact={
+            "name": "FinCred Support",
+            "email": "support@fincred.com",
+            "url": "https://fincred.com/support"
+        },
+        license_info={
+            "name": "MIT License",
+            "url": "https://opensource.org/licenses/MIT"
+        },
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url=f"{settings.API_V0_PREFIX}/openapi.json",
+        openapi_tags=[
+            {
+                "name": "authentication",
+                "description": "User authentication and authorization operations"
+            },
+            {
+                "name": "users",
+                "description": "User profile management"
+            },
+            {
+                "name": "goals",
+                "description": "Financial goal creation and management"
+            },
+            {
+                "name": "planning",
+                "description": "Financial planning and recommendations"
+            },
+            {
+                "name": "tracking",
+                "description": "Progress tracking and check-ins"
+            },
+            {
+                "name": "notifications",
+                "description": "Nudges and notification management"
+            },
+            {
+                "name": "education",
+                "description": "Educational content and resources"
+            },
+            {
+                "name": "health",
+                "description": "System health and monitoring"
+            }
+        ]
     )
     
     # Store settings in app state for access in exception handlers
