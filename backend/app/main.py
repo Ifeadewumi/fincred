@@ -20,6 +20,7 @@ from app.api.v0.routers import (
 )
 from app.core.config import settings
 from app.core.middleware import setup_middleware
+from app.core.exception_handlers import register_exception_handlers
 from app.db.session import init_db
 
 
@@ -31,33 +32,37 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Replaces deprecated @app.on_event decorators with modern pattern.
     Handles startup and shutdown logic with proper error handling.
     """
+    # Import logging after setup
+    from app.core.logging_config import get_logger
+    logger = get_logger(__name__)
+    
     # Startup logic
     try:
-        print(f"🚀 Starting {settings.PROJECT_NAME} v{settings.VERSION}")
-        print(f"📊 Environment: {settings.ENV}")
-        print(f"🔒 CORS Origins: {settings.CORS_ORIGINS}")
+        logger.info(f"🚀 Starting {settings.PROJECT_NAME} v{settings.VERSION}")
+        logger.info(f"📊 Environment: {settings.ENV}")
+        logger.info(f"🔒 CORS Origins: {settings.CORS_ORIGINS}")
         
         # Initialize database schema (for dev only; use Alembic in production)
         if settings.ENV == "development":
-            print("🗄️  Initializing database schema (development mode)...")
+            logger.info("🗄️  Initializing database schema (development mode)...")
             init_db()
-            print("✅ Database schema initialized")
+            logger.info("✅ Database schema initialized")
         else:
-            print("⚠️  Skipping auto schema creation (use Alembic migrations)")
+            logger.warning("⚠️  Skipping auto schema creation (use Alembic migrations)")
         
-        print(f"✅ {settings.PROJECT_NAME} started successfully")
+        logger.info(f"✅ {settings.PROJECT_NAME} started successfully")
         
     except Exception as e:
-        print(f"❌ Failed to start application: {e}")
+        logger.critical(f"❌ Failed to start application: {e}", exc_info=True)
         raise
     
     # Application is running
     yield
     
     # Shutdown logic
-    print(f"🛑 Shutting down {settings.PROJECT_NAME}...")
+    logger.info(f"🛑 Shutting down {settings.PROJECT_NAME}...")
     # Add any cleanup logic here (close connections, flush logs, etc.)
-    print("✅ Shutdown complete")
+    logger.info("✅ Shutdown complete")
 
 
 def create_app() -> FastAPI:
@@ -76,6 +81,12 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
         openapi_url=f"{settings.API_V0_PREFIX}/openapi.json",
     )
+    
+    # Store settings in app state for access in exception handlers
+    app.state.settings = settings
+    
+    # Register global exception handlers
+    register_exception_handlers(app)
     
     # --- CORS Middleware ---
     # Must be added before other middleware to work properly
