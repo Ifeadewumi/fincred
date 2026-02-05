@@ -19,6 +19,7 @@ from app.api.v0.routers import (
     education,
     health,
     goal_progress,
+    chat,
 )
 from app.core.config import settings
 from app.core.middleware import setup_middleware
@@ -146,6 +147,10 @@ Authorization: Bearer <your_token_here>
             {
                 "name": "health",
                 "description": "System health and monitoring"
+            },
+            {
+                "name": "Chat",
+                "description": "AI-powered financial coaching conversations"
             }
         ]
     )
@@ -234,6 +239,12 @@ Authorization: Bearer <your_token_here>
         notification.router,
         prefix=settings.API_V0_PREFIX,
         tags=["Notifications"],
+        dependencies=[Depends(get_current_user)],
+    )
+    app.include_router(
+        chat.router,
+        prefix=settings.API_V0_PREFIX,
+        tags=["Chat"],
         dependencies=[Depends(get_current_user)],
     )
     

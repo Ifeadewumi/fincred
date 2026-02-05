@@ -58,6 +58,20 @@ class Settings(BaseSettings):
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
     
+    # LLM Configuration
+    GOOGLE_AI_API_KEY: str | None = None  # Google AI Studio API key
+    VERTEX_AI_PROJECT: str | None = None  # Vertex AI project (alternative to API key)
+    VERTEX_AI_LOCATION: str = "us-central1"
+    
+    # Model Chain (comma-separated, first is primary, rest are fallbacks)
+    LLM_MODEL_CHAIN: str = "gemini-2.0-flash,gemini-1.5-flash"
+    LLM_TEMPERATURE: float = 0.7
+    LLM_MAX_TOKENS: int = 4096
+    LLM_TIMEOUT: int = 30  # seconds
+    
+    # Optional: OpenAI fallback (for future use)
+    OPENAI_API_KEY: str | None = None
+    
     @field_validator("JWT_SECRET_KEY")
     @classmethod
     def validate_jwt_secret(cls, v: str, info: ValidationInfo) -> str:
