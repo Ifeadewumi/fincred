@@ -1,0 +1,18 @@
+import { Redirect } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { View, ActivityIndicator } from 'react-native';
+
+export default function Index() {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#2563EB" />
+            </View>
+        );
+    }
+
+    // Redirect to tabs if authenticated, otherwise to login
+    return <Redirect href={isAuthenticated ? '/(tabs)' : '/(auth)/login'} />;
+}
