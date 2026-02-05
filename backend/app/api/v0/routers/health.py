@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.get("/health", status_code=status.HTTP_200_OK, tags=["Health"])
+@router.get("/health", status_code=status.HTTP_200_OK)
 async def health_check():
     """
     Basic health check endpoint.
@@ -36,7 +36,7 @@ async def health_check():
     }
 
 
-@router.get("/health/db", status_code=status.HTTP_200_OK, tags=["Health"])
+@router.get("/health/db", status_code=status.HTTP_200_OK)
 async def database_health_check(db: Session = Depends(get_session)):
     """
     Database health check endpoint.
@@ -84,7 +84,7 @@ async def database_health_check(db: Session = Depends(get_session)):
     return response
 
 
-@router.get("/health/detailed", status_code=status.HTTP_200_OK, tags=["Health"])
+@router.get("/health/detailed", status_code=status.HTTP_200_OK)
 async def detailed_health_check(db: Session = Depends(get_session)):
     """
     Detailed health check endpoint with all service statuses.

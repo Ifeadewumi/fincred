@@ -9,7 +9,7 @@ from app.db.session import get_session
 from app.schemas.education import EducationContextFeasibility, EducationSnippetRead, EducationTopic
 from app.services import education_service
 
-router = APIRouter(prefix="/education", tags=["education"])
+router = APIRouter(prefix="/education")
 
 
 @router.get("/snippets", response_model=List[EducationSnippetRead])

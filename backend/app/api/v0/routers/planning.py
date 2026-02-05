@@ -7,7 +7,7 @@ from app.api.v0.deps import get_current_user, get_db
 from app.schemas.planning import PlanResponse
 from app.services.planning import generate_plan
 
-router = APIRouter(prefix="/planning", tags=["planning"])
+router = APIRouter(prefix="/planning")
 
 
 @router.post("/plan", response_model=PlanResponse)

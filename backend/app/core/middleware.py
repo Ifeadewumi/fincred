@@ -97,8 +97,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Note: Adjust based on frontend requirements
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "img-src 'self' data: https:; "
             "font-src 'self'; "
             "connect-src 'self'; "

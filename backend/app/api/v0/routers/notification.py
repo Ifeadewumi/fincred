@@ -11,7 +11,7 @@ from app.schemas.notification import NudgeScheduleCreate, NudgeScheduleRead, Nud
 from app.services import notification_service
 from app.db.session import get_session
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
+router = APIRouter(prefix="/notifications")
 
 
 @router.get("", response_model=List[NudgeScheduleRead])

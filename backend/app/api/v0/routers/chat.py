@@ -26,7 +26,7 @@ from app.core.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/chat", tags=["Chat"])
+router = APIRouter(prefix="/chat")
 
 
 # ============================================================================

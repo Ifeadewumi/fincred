@@ -21,7 +21,7 @@ from app.services.progress_service import (
     get_latest_progress,
 )
 
-router = APIRouter(prefix="/goals", tags=["goal-progress"])
+router = APIRouter(prefix="/goals")
 
 
 @router.get("/{goal_id}/progress", response_model=List[GoalProgressRead])

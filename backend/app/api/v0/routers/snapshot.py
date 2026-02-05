@@ -6,7 +6,7 @@ from app.api.v0.deps import get_current_user, get_db
 from app.schemas.snapshot import SnapshotPutRequest, SnapshotResponse
 from app.services import snapshot_service
 
-router = APIRouter(prefix="/snapshot", tags=["snapshot"])
+router = APIRouter(prefix="/snapshot")
 
 
 @router.get("", response_model=SnapshotResponse)

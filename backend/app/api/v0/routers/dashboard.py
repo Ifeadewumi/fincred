@@ -20,7 +20,7 @@ from app.services.progress_service import (
     get_total_saved_across_goals,
 )
 
-router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+router = APIRouter(prefix="/dashboard")
 
 
 @router.get("", response_model=DashboardResponse)

@@ -20,7 +20,7 @@ class Message(BaseModel):
     message: str
 
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth")
 
 
 # --- Mock Email Service ---

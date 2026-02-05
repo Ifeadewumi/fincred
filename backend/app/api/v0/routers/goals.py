@@ -7,7 +7,7 @@ from app.api.v0.deps import get_current_user, get_db
 from app.schemas.goal import GoalCreate, GoalRead, GoalUpdate
 from app.services import goal_service # Import the service
 
-router = APIRouter(prefix="/goals", tags=["goals"])
+router = APIRouter(prefix="/goals")
 
 
 @router.get("", response_model=list[GoalRead])

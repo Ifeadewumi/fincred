@@ -11,7 +11,7 @@ from app.schemas.action_plan import ActionPlanCreate, ActionPlanRead, ActionPlan
 from app.services import action_plan_service
 from app.db.session import get_session # Need to import get_session for direct use in router
 
-router = APIRouter(tags=["action-plans"])
+router = APIRouter()
 
 
 @router.get("/action-plans", response_model=List[ActionPlanRead])

@@ -11,7 +11,7 @@ from app.schemas.tracking import CheckInCreate, CheckInRead, CheckInUpdate
 from app.services import tracking_service
 from app.db.session import get_session
 
-router = APIRouter(prefix="/checkins", tags=["check-ins"])
+router = APIRouter(prefix="/checkins")
 
 
 @router.get("", response_model=List[CheckInRead])

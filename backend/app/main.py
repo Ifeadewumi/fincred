@@ -110,7 +110,7 @@ Authorization: Bearer <your_token_here>
         },
         docs_url="/docs",
         redoc_url="/redoc",
-        openapi_url=f"{settings.API_V0_PREFIX}/openapi.json",
+        openapi_url="/openapi.json",
         openapi_tags=[
             {
                 "name": "authentication",
@@ -179,6 +179,14 @@ Authorization: Bearer <your_token_here>
     )
     
     # --- API Routers ---
+    
+    # Root endpoint - redirect to docs
+    from fastapi.responses import RedirectResponse
+    
+    @app.get("/", include_in_schema=False)
+    async def root():
+        """Redirect root to API documentation."""
+        return RedirectResponse(url="/docs")
     
     # Public routers (no authentication required)
     app.include_router(auth.router, prefix=settings.API_V0_PREFIX, tags=["Authentication"])
