@@ -92,16 +92,22 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
 
     # Use a single transaction for atomicity
     try:
+        from app.core.config import settings
+        
+        # In development, we can auto-verify users to simplify testing
+        is_verified = settings.ENV == "development"
+        
         user = User(
             email=normalized_email,
             password_hash=hash_password(user_in.password),
-            verification_token=hash_password(verification_token),
+            verification_token=hash_password(verification_token) if not is_verified else None,
+            is_verified=is_verified,
         )
         db.add(user)
         db.flush()  # Use flush to get the user.id without committing
 
         # Create the associated profile in the same transaction
-        profile = Profile(user_id=user.id)
+        profile = Profile(user_id=user.id, full_name=user_in.full_name)
         db.add(profile)
 
         db.commit()

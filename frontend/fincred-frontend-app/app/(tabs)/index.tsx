@@ -1,36 +1,40 @@
 import React from 'react';
-import { StyleSheet, ScrollView, View, SafeAreaView } from 'react-native';
+import { StyleSheet, ScrollView, View, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Text, Card, Button } from '@/components/ui';
 import { GoalCard } from '@/components/cards/GoalCard';
 import { StreakCounter } from '@/components/feedback/StreakCounter';
 import { colors, spacing } from '@/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGoals } from '@/hooks/useGoals';
+import { useSnapshot } from '@/hooks/useSnapshot';
 import { Ionicons } from '@expo/vector-icons';
-
-// Mock data for initial layout
-const MOCK_GOAL = {
-  id: '1',
-  user_id: 'user1',
-  goal_type: 'SAVINGS' as const,
-  name: 'Emergency Fund',
-  target_amount: 5000,
-  target_date: new Date(2026, 11, 31).toISOString(),
-  priority: 'HIGH' as const,
-  status: 'ACTIVE' as const,
-  why_text: 'For peace of mind and unexpected expenses.',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
+import { useRouter } from 'expo-router';
+import { Goal } from '@/types/goal.types';
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const { user } = useAuth();
+  const { goals, isLoading: isLoadingGoals } = useGoals();
+  const { snapshot, isLoading: isLoadingSnapshot } = useSnapshot();
+
+  const isLoading = isLoadingGoals || isLoadingSnapshot;
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const activeGoals = goals.filter((g: Goal) => g.status === 'ACTIVE').slice(0, 2);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <View>
-            <Text variant="h2">Hello, {user?.full_name.split(' ')[0] || 'there'}!</Text>
+            <Text variant="h2">Hello, {user?.profile?.full_name?.split(' ')[0] || 'there'}!</Text>
             <Text variant="bodySmall" color={colors.textSecondary}>
               Let's see your progress today.
             </Text>
@@ -38,28 +42,71 @@ export default function DashboardScreen() {
           <StreakCounter count={1} />
         </View>
 
-        <Card variant="elevated" style={styles.statusCard}>
-          <View style={styles.statusHeader}>
-            <Ionicons name="checkmark-circle" size={24} color={colors.success} />
-            <Text variant="h4" style={styles.statusTitle}>You're on track!</Text>
-          </View>
-          <Text variant="bodySmall" color={colors.textSecondary}>
-            You've completed all your planned actions for this week.
-          </Text>
-          <Button
-            title="View Weekly Report"
-            variant="outline"
-            size="sm"
-            style={styles.statusButton}
-          />
-        </Card>
+        {!snapshot ? (
+          <Card variant="elevated" style={styles.onboardingCard}>
+            <View style={styles.onboardingHeader}>
+              <View style={styles.onboardingIcon}>
+                <Ionicons name="sparkles" size={24} color={colors.white} />
+              </View>
+              <Text variant="h4" style={styles.onboardingTitle}>Complete Your Profile</Text>
+            </View>
+            <Text variant="bodySmall" color={colors.textSecondary} style={styles.onboardingText}>
+              Set up your financial snapshot to get personalized coaching and accurate goal timelines.
+            </Text>
+            <Button
+              title="Start Snapshot"
+              onPress={() => router.push('/snapshot')}
+              style={styles.onboardingButton}
+            />
+          </Card>
+        ) : (
+          <Card variant="elevated" style={styles.statusCard}>
+            <View style={styles.statusHeader}>
+              <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+              <Text variant="h4" style={styles.statusTitle}>You're on track!</Text>
+            </View>
+            <Text variant="bodySmall" color={colors.textSecondary}>
+              Your monthly surplus is ${(snapshot.net_monthly_income - snapshot.total_fixed_expenses).toLocaleString()}.
+            </Text>
+            <Button
+              title="Update Snapshot"
+              variant="outline"
+              size="sm"
+              onPress={() => router.push('/snapshot')}
+              style={styles.statusButton}
+            />
+          </Card>
+        )}
 
         <View style={styles.sectionHeader}>
           <Text variant="h3">Active Goals</Text>
-          <Button title="See All" variant="ghost" size="sm" />
+          <Button
+            title="See All"
+            variant="ghost"
+            size="sm"
+            onPress={() => router.push('/(tabs)/goals')}
+          />
         </View>
 
-        <GoalCard goal={MOCK_GOAL} progressPercent={35} />
+        {activeGoals.length > 0 ? (
+          activeGoals.map((goal: Goal) => (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              progressPercent={0}
+              onPress={() => router.push(`/goal/${goal.id}`)}
+            />
+          ))
+        ) : (
+          <Card variant="outline" style={styles.emptyGoalsCard}>
+            <Text variant="body" align="center" color={colors.textSecondary}>No active goals found.</Text>
+            <Button
+              title="Create Your First Goal"
+              variant="ghost"
+              onPress={() => router.push('/goal/create')}
+            />
+          </Card>
+        )}
 
         <View style={styles.sectionHeader}>
           <Text variant="h3">Upcoming Actions</Text>
@@ -100,15 +147,49 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingTop: spacing.lg,
   },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.lg,
   },
+  onboardingCard: {
+    backgroundColor: colors.white,
+    marginBottom: spacing.xl,
+    padding: spacing.lg,
+  },
+  onboardingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  onboardingIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  onboardingTitle: {
+    color: colors.textPrimary,
+  },
+  onboardingText: {
+    marginBottom: spacing.lg,
+  },
+  onboardingButton: {
+    width: '100%',
+  },
   statusCard: {
     marginBottom: spacing.lg,
-    backgroundColor: colors.successLight + '05', // Very faint green
+    backgroundColor: colors.success + '05', // Very faint green
     borderLeftWidth: 4,
     borderLeftColor: colors.success,
   },
@@ -131,6 +212,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
     marginTop: spacing.sm,
+  },
+  emptyGoalsCard: {
+    padding: spacing.xl,
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   actionCard: {
     marginBottom: spacing.md,

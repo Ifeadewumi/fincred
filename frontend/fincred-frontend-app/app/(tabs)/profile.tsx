@@ -1,63 +1,104 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, ScrollView, SafeAreaView } from 'react-native';
+import { Text, Button, Card } from '@/components/ui';
+import { colors, spacing } from '@/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
     const { user, logout } = useAuth();
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Profile</Text>
-            {user && (
-                <View style={styles.userInfo}>
-                    <Text style={styles.label}>Name:</Text>
-                    <Text style={styles.value}>{user.full_name}</Text>
-
-                    <Text style={styles.label}>Email:</Text>
-                    <Text style={styles.value}>{user.email}</Text>
+        <SafeAreaView style={styles.safeArea}>
+            <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+                <View style={styles.header}>
+                    <View style={styles.avatarPlaceholder}>
+                        <Ionicons name="person" size={40} color={colors.primary} />
+                    </View>
+                    <Text variant="h2">{user?.profile?.full_name || 'FinCred User'}</Text>
+                    <Text variant="body" color={colors.textSecondary}>{user?.email}</Text>
                 </View>
-            )}
 
-            <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-                <Text style={styles.logoutText}>Log Out</Text>
-            </TouchableOpacity>
-        </View>
+                <Card style={styles.card}>
+                    <Text variant="h4" style={styles.cardTitle}>Account Settings</Text>
+
+                    <View style={styles.infoRow}>
+                        <Text variant="label" color={colors.textSecondary}>Full Name</Text>
+                        <Text variant="body">{user?.profile?.full_name || 'Not set'}</Text>
+                    </View>
+
+                    <View style={styles.infoRow}>
+                        <Text variant="label" color={colors.textSecondary}>Email</Text>
+                        <Text variant="body">{user?.email}</Text>
+                    </View>
+
+                    <View style={styles.infoRow}>
+                        <Text variant="label" color={colors.textSecondary}>Verification Status</Text>
+                        <Text variant="body" color={user?.is_verified ? colors.success : colors.warning}>
+                            {user?.is_verified ? 'Verified' : 'Unverified'}
+                        </Text>
+                    </View>
+                </Card>
+
+                <Button
+                    title="Sign Out"
+                    variant="danger"
+                    onPress={logout}
+                    style={styles.logoutButton}
+                />
+
+                <View style={styles.footer}>
+                    <Text variant="caption" align="center" color={colors.gray400}>
+                        Version 1.0.0
+                    </Text>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
     container: {
         flex: 1,
-        padding: 24,
     },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 24,
-        marginTop: 60,
+    content: {
+        padding: spacing.md,
     },
-    userInfo: {
-        marginBottom: 32,
+    header: {
+        alignItems: 'center',
+        marginTop: spacing.xl,
+        marginBottom: spacing.xxl,
     },
-    label: {
-        fontSize: 14,
-        color: '#6B7280',
-        marginTop: 16,
-        marginBottom: 4,
+    avatarPlaceholder: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: colors.gray100,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.md,
     },
-    value: {
-        fontSize: 16,
-        fontWeight: '500',
+    card: {
+        marginBottom: spacing.xl,
+    },
+    cardTitle: {
+        marginBottom: spacing.lg,
+    },
+    infoRow: {
+        marginBottom: spacing.md,
+        paddingBottom: spacing.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.gray50,
     },
     logoutButton: {
-        backgroundColor: '#EF4444',
-        padding: 16,
-        borderRadius: 8,
-        marginTop: 24,
+        marginTop: spacing.md,
     },
-    logoutText: {
-        color: 'white',
-        textAlign: 'center',
-        fontSize: 16,
-        fontWeight: '600',
-    },
+    footer: {
+        marginTop: spacing.xxl,
+        paddingBottom: spacing.xl,
+    }
 });

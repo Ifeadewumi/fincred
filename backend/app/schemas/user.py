@@ -16,6 +16,7 @@ class UserBase(SQLModel):
 class UserCreate(SQLModel):
     email: EmailStr
     password: str
+    full_name: Optional[str] = None
 
 
 class UserRead(UserBase):
@@ -41,6 +42,7 @@ class ProfileUpdate(ProfileBase):
 class ProfileRead(ProfileBase):
     id: UUID
     user_id: UUID
+    full_name: Optional[str] = None
 
 
 class UserReadWithProfile(UserRead):

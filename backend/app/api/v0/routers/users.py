@@ -7,7 +7,7 @@ from app.api.v0.deps import get_current_user, get_db
 from app.models.user import Profile, User
 from app.schemas.user import UserRead, ProfileUpdate, ProfileRead, UserReadWithProfile
 
-router = APIRouter()
+router = APIRouter(prefix="/users")
 
 
 @router.get("/me", response_model=UserReadWithProfile)

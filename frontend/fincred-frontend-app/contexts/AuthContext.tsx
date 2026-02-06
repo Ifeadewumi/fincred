@@ -71,13 +71,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (data: LoginRequest) => {
         const response = await authApi.login(data);
         await SecureStorage.setItemAsync('auth_token', response.access_token);
-        setUser(response.user);
+
+        // Fetch the user profile immediately after login
+        const currentUser = await userApi.getMe();
+        setUser(currentUser);
     };
 
     const signup = async (data: SignupRequest) => {
-        const response = await authApi.signup(data);
-        await SecureStorage.setItemAsync('auth_token', response.access_token);
-        setUser(response.user);
+        await authApi.signup(data);
+        // After signup, we log them in automatically (they are auto-verified in dev)
+        await login({ email: data.email, password: data.password });
     };
 
     const logout = async () => {

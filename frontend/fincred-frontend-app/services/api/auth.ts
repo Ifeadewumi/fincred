@@ -7,14 +7,14 @@ export const authApi = {
         formData.append('username', data.email);
         formData.append('password', data.password);
 
-        const response = await api.post<AuthResponse>('/auth/login', formData, {
+        const response = await api.post<{ access_token: string }>('/auth/login', formData, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         });
         return response.data;
     },
 
     signup: async (data: SignupRequest) => {
-        const response = await api.post<AuthResponse>('/auth/signup', data);
+        const response = await api.post<{ message: string }>('/auth/register', data);
         return response.data;
     },
 

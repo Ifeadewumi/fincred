@@ -1,7 +1,6 @@
 export interface User {
     id: string;
     email: string;
-    full_name: string;
     is_active: boolean;
     is_verified: boolean;
     created_at: string;
@@ -9,6 +8,9 @@ export interface User {
 }
 
 export interface UserProfile {
+    id: string;
+    user_id: string;
+    full_name?: string;
     age?: number;
     country?: string;
     currency?: string;

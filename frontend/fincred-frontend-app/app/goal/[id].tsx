@@ -48,7 +48,7 @@ export default function GoalDetailScreen() {
                     <StatusBadge status={goal.status.toLowerCase() as any} />
                     <Text variant="h2" style={styles.title}>{goal.name}</Text>
                     <Text variant="body" color={colors.textSecondary}>
-                        Target: {goal.target_amount.toLocaleString()} by {format(new Date(goal.target_date), 'MMM d, yyyy')}
+                        Target: ${goal.target_amount.toLocaleString()} by {format(new Date(goal.target_date), 'MMM d, yyyy')}
                     </Text>
                 </View>
 
@@ -57,7 +57,7 @@ export default function GoalDetailScreen() {
                     <View style={styles.progressHeader}>
                         <Text variant="h3">{progressPercent}%</Text>
                         <Text variant="bodySmall" color={colors.textSecondary}>
-                            {progress?.current_amount.toLocaleString()} / {goal.target_amount.toLocaleString()}
+                            ${progress?.current_amount.toLocaleString() || '0'} / ${goal.target_amount.toLocaleString()}
                         </Text>
                     </View>
                     <ProgressBar progress={progressPercent / 100} height={12} />
@@ -73,7 +73,10 @@ export default function GoalDetailScreen() {
                 {goal.why_text && (
                     <View style={styles.section}>
                         <Text variant="h4" style={styles.sectionTitle}>Why this matters</Text>
-                        <Text variant="body" italic>"{goal.why_text}"</Text>
+                        <Card variant="outline" style={styles.quoteCard}>
+                            <Ionicons name="quote" size={20} color={colors.primary} style={styles.quoteIcon} />
+                            <Text variant="body" italic>"{goal.why_text}"</Text>
+                        </Card>
                     </View>
                 )}
 
@@ -117,6 +120,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: colors.background,
     },
     backButton: {
         marginTop: spacing.md,
@@ -148,6 +152,14 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         marginBottom: spacing.sm,
+    },
+    quoteCard: {
+        padding: spacing.md,
+        backgroundColor: colors.gray100 + '30',
+    },
+    quoteIcon: {
+        marginBottom: spacing.xs,
+        opacity: 0.5,
     },
     actions: {
         marginTop: spacing.xl,

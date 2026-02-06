@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, ScrollView, View, SafeAreaView, ActivityIndicator, FlatList } from 'react-native';
-import { Text, Button, Card } from '@/components/ui';
+import { StyleSheet, View, SafeAreaView, ActivityIndicator, FlatList } from 'react-native';
+import { Text, Button } from '@/components/ui';
 import { GoalCard } from '@/components/cards/GoalCard';
 import { colors, spacing } from '@/theme';
 import { useGoals } from '@/hooks/useGoals';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Goal } from '@/types/goal.types';
 
 export default function GoalsScreen() {
     const { goals, isLoading, error } = useGoals();
@@ -19,6 +20,9 @@ export default function GoalsScreen() {
         );
     }
 
+    const activeGoals = goals.filter((g: Goal) => g.status === 'ACTIVE');
+    const completedGoals = goals.filter((g: Goal) => g.status === 'COMPLETED');
+
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.container}>
@@ -28,7 +32,7 @@ export default function GoalsScreen() {
                         title="Add Goal"
                         variant="primary"
                         size="sm"
-                        onPress={() => {/* TODO: Open Create Goal Wizard */ }}
+                        onPress={() => router.push('/goal/create')}
                     />
                 </View>
 
@@ -55,12 +59,19 @@ export default function GoalsScreen() {
                         renderItem={({ item }) => (
                             <GoalCard
                                 goal={item}
-                                progressPercent={0} // TODO: Fetch real progress
+                                progressPercent={0} // TODO: Implement real progress calculation
                                 onPress={() => router.push(`/goal/${item.id}`)}
                             />
                         )}
                         contentContainerStyle={styles.listContent}
                         showsVerticalScrollIndicator={false}
+                        ListHeaderComponent={() => (
+                            <View style={styles.listHeader}>
+                                <Text variant="label" color={colors.textSecondary}>
+                                    {activeGoals.length} ACTIVE GOALS
+                                </Text>
+                            </View>
+                        )}
                     />
                 )}
             </View>
@@ -89,6 +100,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: spacing.lg,
         paddingTop: spacing.sm,
+    },
+    listHeader: {
+        marginBottom: spacing.md,
     },
     listContent: {
         paddingBottom: spacing.xxl,

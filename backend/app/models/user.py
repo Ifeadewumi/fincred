@@ -32,6 +32,7 @@ class User(SQLModel, table=True):
 class Profile(SQLModel, table=True):
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="user.id", index=True)
+    full_name: Optional[str] = None
     country: Optional[str] = None
     currency: Optional[str] = None
     age_range: Optional[str] = None
