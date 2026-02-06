@@ -11,10 +11,10 @@ export interface UserProfile {
     id: string;
     user_id: string;
     full_name?: string;
-    age?: number;
+    age_range?: string;
     country?: string;
     currency?: string;
-    persona?: 'debt_crusher' | 'safety_builder' | 'fire_seeker';
+    persona_hint?: string;
     preferred_checkin_day_of_week?: number;
 }
 
@@ -37,9 +37,9 @@ export interface AuthResponse {
 
 export interface UpdateProfileRequest {
     full_name?: string;
-    age?: number;
+    age_range?: string;
     country?: string;
     currency?: string;
-    persona?: 'debt_crusher' | 'safety_builder' | 'fire_seeker';
+    persona_hint?: string;
     preferred_checkin_day_of_week?: number;
 }

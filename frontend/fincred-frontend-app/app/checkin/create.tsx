@@ -58,10 +58,11 @@ export default function CreateCheckinScreen() {
                 comment: comment || undefined,
             };
 
-            await createCheckin(data);
-            Alert.alert('Success', 'Check-in recorded!', [
-                { text: 'OK', onPress: () => router.back() }
-            ]);
+            const newCheckin = await createCheckin(data);
+            router.replace({
+                pathname: '/checkin/feedback',
+                params: { id: newCheckin.id }
+            });
         } catch (error) {
             Alert.alert('Error', 'Failed to save check-in. Please try again.');
         }

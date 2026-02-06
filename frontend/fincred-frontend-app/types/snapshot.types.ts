@@ -15,11 +15,11 @@ export interface Expense {
 
 export interface Debt {
     id: string;
-    name: string;
-    debt_type: DebtType;
+    label?: string; // Changed from name to label to match backend
+    type: DebtType; // Changed from debt_type to type to match backend
     balance: number;
-    interest_rate: number;
-    minimum_payment: number;
+    interest_rate_annual: number;
+    min_payment: number;
 }
 
 export interface SavingsAccount {
@@ -34,6 +34,8 @@ export interface FinancialSnapshot {
     debts: Debt[];
     savings: SavingsAccount[];
 }
+
+export type Snapshot = FinancialSnapshot;
 
 export interface CreateSnapshotRequest {
     net_monthly_income: number;
