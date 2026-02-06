@@ -1,19 +1,22 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, SafeAreaView, ActivityIndicator, Alert, Modal } from 'react-native';
+import { StyleSheet, View, ScrollView, SafeAreaView, ActivityIndicator, Alert, Modal, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Text, Button, Card, Input } from '@/components/ui';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { ProgressBar } from '@/components/feedback/ProgressBar';
 import { colors, spacing } from '@/theme';
 import { useGoal, useGoalProgress, useGoals } from '@/hooks/useGoals';
+import { useGoalActionPlans } from '@/hooks/useActionPlans';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
+import type { ActionPlan } from '@/types/actionPlan.types';
 
 export default function GoalDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const { data: goal, isLoading: isLoadingGoal } = useGoal(id as string);
     const { progress, isLoading: isLoadingProgress } = useGoalProgress(id as string);
+    const { data: actionPlans, isLoading: isLoadingActionPlans } = useGoalActionPlans(id as string);
 
     if (isLoadingGoal || isLoadingProgress) {
         return (
@@ -140,6 +143,44 @@ export default function GoalDetailScreen() {
                         </Card>
                     </View>
                 )}
+
+                {/* Action Plans Section */}
+                <View style={styles.section}>
+                    <Text variant="h4" style={styles.sectionTitle}>Action Plans</Text>
+                    {isLoadingActionPlans ? (
+                        <ActivityIndicator size="small" color={colors.primary} />
+                    ) : actionPlans && actionPlans.length > 0 ? (
+                        actionPlans.map((plan: ActionPlan) => (
+                            <Card key={plan.id} variant="outline" style={styles.actionPlanCard}>
+                                <View style={styles.actionPlanHeader}>
+                                    <View style={[styles.planTypeIcon, { backgroundColor: getPlanTypeColor(plan.type) + '15' }]}>
+                                        <Ionicons
+                                            name={getPlanTypeIcon(plan.type)}
+                                            size={18}
+                                            color={getPlanTypeColor(plan.type)}
+                                        />
+                                    </View>
+                                    <View style={styles.actionPlanInfo}>
+                                        <Text variant="body">{getPlanTypeLabel(plan.type)}</Text>
+                                        <Text variant="caption" color={colors.textSecondary}>
+                                            ${plan.amount.toLocaleString()} • {getFrequencyLabel(plan.frequency)}
+                                        </Text>
+                                    </View>
+                                    {plan.is_confirmed_set_up && (
+                                        <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                                    )}
+                                </View>
+                            </Card>
+                        ))
+                    ) : (
+                        <Card variant="outline" style={styles.emptyActionPlans}>
+                            <Ionicons name="clipboard-outline" size={32} color={colors.gray400} />
+                            <Text variant="bodySmall" color={colors.textSecondary} style={{ marginTop: spacing.sm }}>
+                                No action plans yet
+                            </Text>
+                        </Card>
+                    )}
+                </View>
 
                 <View style={styles.actions}>
                     <Button
@@ -298,4 +339,65 @@ const styles = StyleSheet.create({
         marginLeft: spacing.md,
         minWidth: 100,
     },
+    actionPlanCard: {
+        marginBottom: spacing.sm,
+        padding: spacing.md,
+    },
+    actionPlanHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    planTypeIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    actionPlanInfo: {
+        flex: 1,
+        marginLeft: spacing.md,
+    },
+    emptyActionPlans: {
+        alignItems: 'center',
+        padding: spacing.lg,
+    },
 });
+
+// Helper functions for action plans
+function getPlanTypeIcon(type: string): any {
+    switch (type) {
+        case 'savings_transfer': return 'wallet-outline';
+        case 'debt_payment': return 'card-outline';
+        case 'budget_check': return 'calculator-outline';
+        default: return 'clipboard-outline';
+    }
+}
+
+function getPlanTypeLabel(type: string): string {
+    switch (type) {
+        case 'savings_transfer': return 'Savings Transfer';
+        case 'debt_payment': return 'Debt Payment';
+        case 'budget_check': return 'Budget Check';
+        default: return type;
+    }
+}
+
+function getPlanTypeColor(type: string): string {
+    switch (type) {
+        case 'savings_transfer': return colors.success;
+        case 'debt_payment': return colors.warning;
+        case 'budget_check': return colors.primary;
+        default: return colors.gray500;
+    }
+}
+
+function getFrequencyLabel(frequency: string): string {
+    switch (frequency) {
+        case 'weekly': return 'Weekly';
+        case 'bi_weekly': return 'Bi-weekly';
+        case 'monthly': return 'Monthly';
+        case 'daily': return 'Daily';
+        default: return frequency;
+    }
+}
