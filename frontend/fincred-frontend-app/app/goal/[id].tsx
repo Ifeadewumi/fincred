@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ScrollView, SafeAreaView, ActivityIndicator, Alert, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Text, Button, Card } from '@/components/ui';
+import { Text, Button, Card, Input } from '@/components/ui';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { ProgressBar } from '@/components/feedback/ProgressBar';
 import { colors, spacing } from '@/theme';
-import { useGoal, useGoalProgress } from '@/hooks/useGoals';
+import { useGoal, useGoalProgress, useGoals } from '@/hooks/useGoals';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 
@@ -32,7 +32,68 @@ export default function GoalDetailScreen() {
         );
     }
 
-    const progressPercent = progress?.percent_complete || 0;
+    const [isUpdateModalVisible, setIsUpdateModalVisible] = React.useState(false);
+    const [updateAmount, setUpdateAmount] = React.useState('');
+    const { updateProgress, isUpdating: isUpdatingProgressAction } = useGoalProgress(id as string);
+    const { deleteGoal, isDeleting } = useGoals();
+
+    const handleUpdateProgress = async () => {
+        if (!updateAmount || isNaN(parseFloat(updateAmount))) {
+            Alert.alert('Error', 'Please enter a valid number');
+            return;
+        }
+        try {
+            await updateProgress({ amount: parseFloat(updateAmount) });
+            setIsUpdateModalVisible(false);
+            setUpdateAmount('');
+            Alert.alert('Success', 'Progress updated successfully');
+        } catch (error) {
+            console.error('Failed to update progress:', error);
+            Alert.alert('Error', 'Failed to update progress. Please try again.');
+        }
+    };
+
+    const handleDeleteGoal = () => {
+        const performDelete = async () => {
+            try {
+                await deleteGoal(id as string);
+                router.replace('/(tabs)/goals');
+            } catch (error) {
+                console.error('Failed to delete goal:', error);
+                Alert.alert('Error', 'Failed to delete goal. Please try again.');
+            }
+        };
+
+        // Platform-agnostic confirmation
+        if (typeof window !== 'undefined' && (window as any).confirm) {
+            // Web fallback
+            if (window.confirm('Are you sure you want to delete this goal? This action cannot be undone.')) {
+                performDelete();
+            }
+        } else {
+            // Native Alert
+            Alert.alert(
+                'Delete Goal',
+                'Are you sure you want to delete this goal? This action cannot be undone.',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: performDelete,
+                    },
+                ]
+            );
+        }
+    };
+
+    const handleEditGoal = () => {
+        router.push(`/goal/edit/${id}`);
+    };
+
+    const progressPercent = goal.target_amount > 0
+        ? Math.round(((progress?.current_balance || 0) / goal.target_amount) * 100)
+        : 0;
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -57,7 +118,7 @@ export default function GoalDetailScreen() {
                     <View style={styles.progressHeader}>
                         <Text variant="h3">{progressPercent}%</Text>
                         <Text variant="bodySmall" color={colors.textSecondary}>
-                            ${progress?.current_amount?.toLocaleString() || '0'} / ${goal.target_amount?.toLocaleString() || '0'}
+                            ${progress?.current_balance?.toLocaleString() || '0'} / ${goal.target_amount?.toLocaleString() || '0'}
                         </Text>
                     </View>
                     <ProgressBar progress={progressPercent / 100} height={12} />
@@ -83,23 +144,62 @@ export default function GoalDetailScreen() {
                 <View style={styles.actions}>
                     <Button
                         title="Update Progress"
-                        onPress={() => {/* TODO: Open Update Progress Modal */ }}
+                        onPress={() => setIsUpdateModalVisible(true)}
                         style={styles.actionButton}
                     />
                     <Button
                         title="Edit Goal"
                         variant="outline"
-                        onPress={() => {/* TODO: Open Edit Goal Form */ }}
+                        onPress={handleEditGoal}
                         style={styles.actionButton}
                     />
                     <Button
                         title="Delete Goal"
                         variant="danger"
-                        onPress={() => {/* TODO: Confirm Delete */ }}
+                        onPress={handleDeleteGoal}
+                        loading={isDeleting}
                         style={styles.actionButton}
                     />
                 </View>
             </ScrollView>
+
+            <Modal
+                visible={isUpdateModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setIsUpdateModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text variant="h3" style={styles.modalTitle}>Update Progress</Text>
+                        <Text variant="body" color={colors.textSecondary} style={styles.modalSubtitle}>
+                            Enter the total amount saved or paid off so far.
+                        </Text>
+                        <Input
+                            label="Current Amount"
+                            placeholder="0.00"
+                            keyboardType="numeric"
+                            value={updateAmount}
+                            onChangeText={setUpdateAmount}
+                            autoFocus
+                        />
+                        <View style={styles.modalActions}>
+                            <Button
+                                title="Cancel"
+                                variant="ghost"
+                                onPress={() => setIsUpdateModalVisible(false)}
+                                style={styles.modalButton}
+                            />
+                            <Button
+                                title="Update"
+                                onPress={handleUpdateProgress}
+                                loading={isUpdatingProgressAction}
+                                style={styles.modalButton}
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -166,5 +266,36 @@ const styles = StyleSheet.create({
     },
     actionButton: {
         marginBottom: spacing.md,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: spacing.lg,
+    },
+    modalContent: {
+        backgroundColor: colors.white,
+        borderRadius: 16,
+        padding: spacing.lg,
+        elevation: 5,
+        shadowColor: colors.black,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    modalTitle: {
+        marginBottom: spacing.xs,
+    },
+    modalSubtitle: {
+        marginBottom: spacing.lg,
+    },
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: spacing.lg,
+    },
+    modalButton: {
+        marginLeft: spacing.md,
+        minWidth: 100,
     },
 });

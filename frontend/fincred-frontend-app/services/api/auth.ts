@@ -24,12 +24,13 @@ export const authApi = {
     },
 
     verifyEmail: async (token: string) => {
-        const response = await api.post('/auth/verify-email', { token });
+        // Backend expects GET with query parameter
+        const response = await api.get<{ access_token: string }>(`/auth/verify-email?token=${encodeURIComponent(token)}`);
         return response.data;
     },
 
     resendVerification: async (email: string) => {
-        const response = await api.post('/auth/resend-verification', { email });
+        const response = await api.post<{ message: string }>('/auth/resend-verification', { email });
         return response.data;
     },
 };

@@ -19,10 +19,13 @@ export interface Goal {
 }
 
 export interface GoalProgress {
+    id: string;
     goal_id: string;
-    current_amount: number;
-    last_updated: string;
-    percent_complete: number;
+    user_id: string;
+    current_balance: number;
+    source: string;
+    note?: string;
+    recorded_at: string;
 }
 
 export interface CreateGoalRequest {

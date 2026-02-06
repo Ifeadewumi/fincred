@@ -8,13 +8,13 @@ import type {
 } from '@/types/chat.types';
 
 export const chatApi = {
-    getSessions: async () => {
-        const response = await api.get<ConversationSession[]>('/chat/sessions');
+    sendMessage: async (data: SendMessageRequest) => {
+        const response = await api.post<ChatResponse>('/chat/message', data);
         return response.data;
     },
 
-    sendMessage: async (data: SendMessageRequest) => {
-        const response = await api.post<ChatResponse>('/chat/message', data);
+    startSession: async (intent: string = 'general') => {
+        const response = await api.post<{ session_id: string; greeting: string; intent: string }>('/chat/start', { intent });
         return response.data;
     },
 
@@ -34,7 +34,8 @@ export const checkInApi = {
     },
 
     getLatest: async () => {
-        const response = await api.get<CheckIn>('/checkins/latest');
-        return response.data;
+        // Get list and return first item (most recent)
+        const response = await api.get<CheckIn[]>('/checkins?limit=1');
+        return response.data[0] || null;
     },
 };

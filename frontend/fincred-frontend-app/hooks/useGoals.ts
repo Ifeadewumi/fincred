@@ -20,8 +20,9 @@ export const useGoals = () => {
     const updateGoalMutation = useMutation({
         mutationFn: ({ id, data }: { id: string; data: UpdateGoalRequest }) =>
             goalsApi.update(id, data),
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['goals'] });
+            queryClient.invalidateQueries({ queryKey: ['goal', variables.id] });
         },
     });
 
@@ -67,6 +68,8 @@ export const useGoalProgress = (id: string) => {
             goalsApi.updateProgress(id, amount),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['goalProgress', id] });
+            queryClient.invalidateQueries({ queryKey: ['goal', id] });
+            queryClient.invalidateQueries({ queryKey: ['goals'] });
         },
     });
 

@@ -1,5 +1,6 @@
 # backend/app/api/v0/routers/goal_progress.py
 """Goal progress tracking endpoints."""
+import logging
 from typing import List
 from uuid import UUID
 
@@ -65,6 +66,7 @@ def create_progress_record(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
+    logging.info(f"Received progress data for goal {goal_id}: {progress_data.model_dump_json()}")
     """
     Create a new progress record for a goal.
     

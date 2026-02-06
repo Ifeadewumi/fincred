@@ -27,13 +27,16 @@ export const goalsApi = {
     },
 
     getProgress: async (id: string) => {
-        const response = await api.get<GoalProgress>(`/goals/${id}/progress`);
-        return response.data;
+        // Backend returns a list of progress records, we get the most recent one
+        const response = await api.get<GoalProgress[]>(`/goals/${id}/progress?limit=1`);
+        return response.data[0] || null;
     },
 
     updateProgress: async (id: string, amount: number) => {
-        const response = await api.post<GoalProgress>(`/goals/${id}/progress`, {
-            current_amount: amount,
+        const response = await api.post(`/goals/${id}/progress`, {
+            goal_id: id,
+            current_balance: amount,
+            source: 'manual_entry',
         });
         return response.data;
     },

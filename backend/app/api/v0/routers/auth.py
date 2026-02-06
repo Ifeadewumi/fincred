@@ -187,3 +187,37 @@ def login(
     access_token = create_access_token(subject=user.email)
     return Token(access_token=access_token)
 
+
+class ResendVerificationRequest(BaseModel):
+    email: str
+
+
+@router.post("/resend-verification", response_model=Message)
+def resend_verification(
+    request: ResendVerificationRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Resends the verification email for an unverified account.
+    Returns a generic message to prevent user enumeration.
+    """
+    email = request.email.lower()
+    user = db.exec(select(User).where(User.email == email)).first()
+
+    # Always return the same message to prevent enumeration
+    generic_response = {
+        "message": "If an account exists with this email and is unverified, a new verification email has been sent."
+    }
+
+    if not user or user.is_verified:
+        return generic_response
+
+    # Generate new verification token
+    verification_token = secrets.token_urlsafe(32)
+    user.verification_token = hash_password(verification_token)
+    db.add(user)
+    db.commit()
+
+    _send_verification_email(email=email, token=verification_token)
+
+    return generic_response
