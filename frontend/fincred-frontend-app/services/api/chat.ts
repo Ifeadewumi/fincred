@@ -18,6 +18,47 @@ export const chatApi = {
         return response.data;
     },
 
+    /**
+     * Get information about a conversation session.
+     */
+    getSession: async (sessionId: string) => {
+        const response = await api.get<{
+            session_id: string;
+            intent: string;
+            message_count: number;
+            created_at: string;
+            updated_at: string;
+        }>(`/chat/session/${sessionId}`);
+        return response.data;
+    },
+
+    /**
+     * End and clear a conversation session.
+     */
+    endSession: async (sessionId: string): Promise<void> => {
+        await api.delete(`/chat/session/${sessionId}`);
+    },
+
+    /**
+     * Refresh the context for an existing session.
+     */
+    refreshSession: async (sessionId: string) => {
+        const response = await api.post<{ status: string; message: string }>(`/chat/session/${sessionId}/refresh`);
+        return response.data;
+    },
+
+    /**
+     * Check LLM service health.
+     */
+    checkHealth: async () => {
+        const response = await api.get<{
+            llm_available: boolean;
+            active_sessions: number;
+            providers: string[];
+        }>('/chat/health');
+        return response.data;
+    },
+
     // For streaming, we'll need to use EventSource
     // This will be implemented when building the chat UI
 };
