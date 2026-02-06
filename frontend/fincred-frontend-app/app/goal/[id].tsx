@@ -88,7 +88,7 @@ export default function GoalDetailScreen() {
     };
 
     const handleEditGoal = () => {
-        router.push(`/goal/edit/${id}`);
+        router.push(`/goal/edit/${id}` as any);
     };
 
     const progressPercent = goal.target_amount > 0
