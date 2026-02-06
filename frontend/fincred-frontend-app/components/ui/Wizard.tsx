@@ -14,9 +14,18 @@ interface WizardProps {
     onComplete: (data: any) => void;
     onCancel: () => void;
     style?: ViewStyle;
+    completeButtonTitle?: string;
+    showBackButton?: boolean;
 }
 
-export function Wizard({ steps, onComplete, onCancel, style }: WizardProps) {
+export function Wizard({
+    steps,
+    onComplete,
+    onCancel,
+    style,
+    completeButtonTitle = 'Create Goal',
+    showBackButton = true
+}: WizardProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<any>({});
 
@@ -83,7 +92,7 @@ export function Wizard({ steps, onComplete, onCancel, style }: WizardProps) {
                     style={styles.navButton}
                 />
                 <Button
-                    title={isLastStep ? 'Create Goal' : 'Continue'}
+                    title={isLastStep ? completeButtonTitle : 'Continue'}
                     variant="primary"
                     onPress={handleNext}
                     style={[styles.navButton, { marginLeft: spacing.md }]}

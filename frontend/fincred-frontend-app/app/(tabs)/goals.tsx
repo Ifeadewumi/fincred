@@ -20,8 +20,8 @@ export default function GoalsScreen() {
         );
     }
 
-    const activeGoals = goals.filter((g: Goal) => g.status === 'ACTIVE');
-    const completedGoals = goals.filter((g: Goal) => g.status === 'COMPLETED');
+    const activeGoals = goals.filter((g: Goal) => g.status === 'active');
+    const completedGoals = goals.filter((g: Goal) => g.status === 'completed');
 
     return (
         <SafeAreaView style={styles.safeArea}>

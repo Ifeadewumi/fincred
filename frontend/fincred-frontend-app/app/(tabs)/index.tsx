@@ -27,7 +27,7 @@ export default function DashboardScreen() {
     );
   }
 
-  const activeGoals = goals.filter((g: Goal) => g.status === 'ACTIVE').slice(0, 2);
+  const activeGoals = goals.filter((g: Goal) => g.status === 'active').slice(0, 2);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -66,7 +66,7 @@ export default function DashboardScreen() {
               <Text variant="h4" style={styles.statusTitle}>You're on track!</Text>
             </View>
             <Text variant="bodySmall" color={colors.textSecondary}>
-              Your monthly surplus is ${(snapshot.net_monthly_income - snapshot.total_fixed_expenses).toLocaleString()}.
+              Your monthly surplus is ${((snapshot.income?.amount || 0) - (snapshot.expenses?.total_amount || 0)).toLocaleString()}.
             </Text>
             <Button
               title="Update Snapshot"
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   onboardingTitle: {
-    color: colors.textPrimary,
+    color: colors.text,
   },
   onboardingText: {
     marginBottom: spacing.lg,

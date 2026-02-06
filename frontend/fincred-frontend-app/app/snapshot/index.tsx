@@ -8,10 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function SnapshotScreen() {
     const router = useRouter();
-    const { createSnapshot, updateSnapshot, snapshot } = useSnapshot();
+    const { saveSnapshot, snapshot } = useSnapshot();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const steps = [
+        // ... steps remain the same visually
         {
             title: 'Monthly Income',
             component: ({ data, updateData }: any) => (
@@ -57,7 +58,6 @@ export default function SnapshotScreen() {
                         label="Total Savings Balance"
                         placeholder="0.00"
                         keyboardType="numeric"
-                        // We map this to savings_accounts: [{ label: 'Total', balance: value }]
                         value={data.savings_total?.toString()}
                         onChangeText={(text) => updateData({ savings_total: parseFloat(text) || 0 })}
                     />
@@ -100,20 +100,21 @@ export default function SnapshotScreen() {
         try {
             setIsSubmitting(true);
 
+            // Construct the payload to match backend SnapshotPutRequest
             const payload = {
-                net_monthly_income: data.net_monthly_income,
-                total_fixed_expenses: data.total_fixed_expenses,
-                savings_accounts: data.savings_total ? [{ label: 'Total Savings', balance: data.savings_total }] : [],
-                incomes: [{ source: 'Primary Income', amount: data.net_monthly_income, frequency: 'monthly' as any }],
-                expenses: [{ category: 'Fixed Expenses', amount: data.total_fixed_expenses }],
+                income: {
+                    amount: data.net_monthly_income,
+                    frequency: 'monthly' as any,
+                    source_label: 'Primary Income'
+                },
+                expenses: {
+                    total_amount: data.total_fixed_expenses
+                },
+                savings: data.savings_total ? [{ label: 'Total Savings', balance: data.savings_total }] : [],
                 debts: [],
             };
 
-            if (snapshot) {
-                await updateSnapshot(payload);
-            } else {
-                await createSnapshot(payload);
-            }
+            await saveSnapshot(payload);
 
             Alert.alert('Success', 'Your financial snapshot has been updated!');
             router.replace('/(tabs)');
@@ -132,6 +133,7 @@ export default function SnapshotScreen() {
                 steps={steps}
                 onComplete={handleComplete}
                 onCancel={() => router.back()}
+                completeButtonTitle="Save Snapshot"
             />
         </View>
     );

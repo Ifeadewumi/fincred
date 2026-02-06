@@ -1,17 +1,16 @@
-export type DebtType = 'credit_card' | 'student_loan' | 'auto_loan' | 'mortgage' | 'personal_loan' | 'other';
+export type DebtType = 'credit_card' | 'student_loan' | 'car_loan' | 'mortgage' | 'personal_loan' | 'other';
 export type PayFrequency = 'weekly' | 'biweekly' | 'monthly';
 
 export interface Income {
     id: string;
-    source: string;
+    source_label?: string;
     amount: number;
     frequency: PayFrequency;
 }
 
 export interface Expense {
     id: string;
-    category: string;
-    amount: number;
+    total_amount: number;
 }
 
 export interface Debt {
@@ -30,16 +29,10 @@ export interface SavingsAccount {
 }
 
 export interface FinancialSnapshot {
-    id: string;
-    user_id: string;
-    net_monthly_income: number;
-    total_fixed_expenses: number;
-    incomes: Income[];
-    expenses: Expense[];
+    income?: Income;
+    expenses?: Expense;
     debts: Debt[];
-    savings_accounts: SavingsAccount[];
-    created_at: string;
-    updated_at: string;
+    savings: SavingsAccount[];
 }
 
 export interface CreateSnapshotRequest {
@@ -49,4 +42,25 @@ export interface CreateSnapshotRequest {
     expenses?: Omit<Expense, 'id'>[];
     debts?: Omit<Debt, 'id'>[];
     savings_accounts?: Omit<SavingsAccount, 'id'>[];
+}
+export interface SnapshotPutRequest {
+    income?: {
+        amount: number;
+        frequency: PayFrequency;
+        source_label?: string;
+    };
+    expenses?: {
+        total_amount: number;
+    };
+    debts?: {
+        type: DebtType;
+        label?: string;
+        balance: number;
+        interest_rate_annual: number;
+        min_payment: number;
+    }[];
+    savings?: {
+        label?: string;
+        balance: number;
+    }[];
 }

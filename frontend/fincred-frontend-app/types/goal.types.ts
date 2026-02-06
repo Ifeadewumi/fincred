@@ -1,17 +1,18 @@
-export type GoalType = 'DEBT_PAYOFF' | 'SAVINGS' | 'INVESTMENT' | 'CUSTOM';
-export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'PAUSED' | 'CANCELLED';
-export type GoalPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+export type GoalType = 'debt_payoff' | 'emergency_fund' | 'short_term_saving' | 'fire_starter';
+export type GoalStatus = 'active' | 'paused' | 'completed' | 'cancelled';
+export type GoalPriority = 'High' | 'Medium' | 'Low';
 
 export interface Goal {
     id: string;
     user_id: string;
-    goal_type: GoalType;
+    type: GoalType;
     name: string;
     description?: string;
     target_amount: number;
     target_date: string;
     priority: GoalPriority;
     status: GoalStatus;
+    primary_flag: boolean;
     why_text?: string;
     created_at: string;
     updated_at: string;
@@ -25,12 +26,13 @@ export interface GoalProgress {
 }
 
 export interface CreateGoalRequest {
-    goal_type: GoalType;
+    type: GoalType;
     name: string;
     description?: string;
     target_amount: number;
     target_date: string;
-    priority?: GoalPriority;
+    priority: GoalPriority;
+    primary_flag?: boolean;
     why_text?: string;
 }
 

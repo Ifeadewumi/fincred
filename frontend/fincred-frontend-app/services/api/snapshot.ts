@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { FinancialSnapshot, CreateSnapshotRequest } from '@/types/snapshot.types';
+import type { FinancialSnapshot, SnapshotPutRequest } from '@/types/snapshot.types';
 
 export const snapshotApi = {
     get: async () => {
@@ -7,12 +7,7 @@ export const snapshotApi = {
         return response.data;
     },
 
-    create: async (data: CreateSnapshotRequest) => {
-        const response = await api.post<FinancialSnapshot>('/snapshot', data);
-        return response.data;
-    },
-
-    update: async (data: Partial<CreateSnapshotRequest>) => {
+    save: async (data: SnapshotPutRequest) => {
         const response = await api.put<FinancialSnapshot>('/snapshot', data);
         return response.data;
     },

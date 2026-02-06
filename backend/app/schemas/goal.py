@@ -11,7 +11,7 @@ from sqlmodel import SQLModel
 # --- Enums for data validation ---
 class GoalType(str, Enum):
     DEBT_PAYOFF = "debt_payoff"
-    EMERGENCY_FUND = "emergency_FUND"
+    EMERGENCY_FUND = "emergency_fund"
     SHORT_TERM_SAVING = "short_term_saving"
     FIRE_STARTER = "fire_starter"
 

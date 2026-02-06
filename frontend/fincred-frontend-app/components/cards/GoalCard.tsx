@@ -14,7 +14,7 @@ interface Props {
 }
 
 export const GoalCard: React.FC<Props> = ({ goal, progressPercent, onPress }) => {
-    const isCompleted = goal.status === 'COMPLETED';
+    const isCompleted = goal.status === 'completed';
 
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.8}>

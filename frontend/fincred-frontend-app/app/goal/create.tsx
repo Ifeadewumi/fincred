@@ -8,10 +8,10 @@ import { GoalType } from '@/types/goal.types';
 import { Ionicons } from '@expo/vector-icons';
 
 const GOAL_TYPES: { type: GoalType; label: string; icon: string; description: string }[] = [
-    { type: 'SAVINGS', label: 'Savings', icon: 'wallet-outline', description: 'Emergency fund, big purchase, or vacation' },
-    { type: 'DEBT_PAYOFF', label: 'Debt Payoff', icon: 'card-outline', description: 'Credit cards, loans, or mortgages' },
-    { type: 'INVESTMENT', label: 'Investment', icon: 'trending-up-outline', description: 'Retirement or long-term wealth' },
-    { type: 'CUSTOM', label: 'Other', icon: 'flag-outline', description: 'Anything else you want to track' },
+    { type: 'emergency_fund', label: 'Savings', icon: 'wallet-outline', description: 'Emergency fund, big purchase, or vacation' },
+    { type: 'debt_payoff', label: 'Debt Payoff', icon: 'card-outline', description: 'Credit cards, loans, or mortgages' },
+    { type: 'short_term_saving', label: 'Investment', icon: 'trending-up-outline', description: 'Retirement or long-term wealth' },
+    { type: 'fire_starter', label: 'Other', icon: 'flag-outline', description: 'Anything else you want to track' },
 ];
 
 export default function CreateGoalScreen() {
@@ -29,22 +29,22 @@ export default function CreateGoalScreen() {
                             key={item.type}
                             style={[
                                 styles.typeCard,
-                                data.goal_type === item.type && styles.selectedTypeCard,
+                                data.type === item.type && styles.selectedTypeCard,
                             ]}
-                            onPress={() => updateData({ goal_type: item.type })}
+                            onPress={() => updateData({ type: item.type })}
                         >
-                            <View style={[styles.iconContainer, data.goal_type === item.type && styles.selectedIconContainer]}>
+                            <View style={[styles.iconContainer, data.type === item.type && styles.selectedIconContainer]}>
                                 <Ionicons
                                     name={item.icon as any}
                                     size={24}
-                                    color={data.goal_type === item.type ? colors.white : colors.primary}
+                                    color={data.type === item.type ? colors.white : colors.primary}
                                 />
                             </View>
                             <View style={styles.typeText}>
                                 <Text variant="h4">{item.label}</Text>
                                 <Text variant="bodySmall" color={colors.textSecondary}>{item.description}</Text>
                             </View>
-                            {data.goal_type === item.type && (
+                            {data.type === item.type && (
                                 <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                             )}
                         </TouchableOpacity>
@@ -99,14 +99,15 @@ export default function CreateGoalScreen() {
         try {
             setIsSubmitting(true);
             // Validations
-            if (!data.name || !data.target_amount || !data.target_date || !data.goal_type) {
+            if (!data.name || !data.target_amount || !data.target_date || !data.type) {
                 alert('Please fill in all required fields');
                 return;
             }
 
             await createGoal({
                 ...data,
-                priority: 'MEDIUM',
+                priority: 'Medium',
+                primary_flag: false,
             });
             router.back();
         } catch (error) {
