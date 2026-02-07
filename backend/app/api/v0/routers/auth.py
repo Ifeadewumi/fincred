@@ -221,3 +221,14 @@ def resend_verification(
     _send_verification_email(email=email, token=verification_token)
 
     return generic_response
+
+
+@router.post("/logout", response_model=Message)
+def logout():
+    """
+    Logs the user out.
+    Since we are using stateless JWTs, the client simply discards the token.
+    This endpoint exists to support future server-side token invalidation (e.g., blocklist)
+    and to provide a consistent API for the frontend.
+    """
+    return {"message": "Successfully logged out"}

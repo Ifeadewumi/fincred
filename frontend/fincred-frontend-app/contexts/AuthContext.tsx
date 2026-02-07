@@ -84,6 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = async () => {
+        try {
+            await authApi.logout();
+        } catch (error) {
+            console.error('Logout failed:', error);
+            // Continue with local logout even if backend fails
+        }
         await SecureStorage.deleteItemAsync('auth_token');
         setUser(null);
     };

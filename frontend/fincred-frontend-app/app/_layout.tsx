@@ -49,20 +49,50 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </Stack>
-        </ThemeProvider>
+        <ProtectedRoute>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+            </Stack>
+          </ThemeProvider>
+        </ProtectedRoute>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter, useSegments } from 'expo-router';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'landing';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      // Redirect to the sign-in page if not signed in and not in the auth group
+      router.replace('/landing'); // Redirect to landing instead of login for better UX
+    } else if (isAuthenticated && inAuthGroup) {
+      // Redirect to the home page if signed in and trying to access auth pages
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, segments, isLoading]);
+
+  return <>{children}</>;
+}
+
