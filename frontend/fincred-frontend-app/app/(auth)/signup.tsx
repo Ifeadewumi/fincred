@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvo
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors } from '@/theme';
+import { api } from '@/services/api/client';
 
 export default function SignupScreen() {
     const [fullName, setFullName] = useState('');
@@ -49,7 +50,10 @@ export default function SignupScreen() {
             await signup({ email, password, full_name: fullName });
             router.replace('/(tabs)');
         } catch (err: any) {
-            Alert.alert('Signup Failed', err.response?.data?.detail || 'Failed to create account');
+            console.error('Signup Error:', err);
+            const errorMessage = err.response?.data?.detail || err.message || 'Failed to create account';
+            const baseURL = api.defaults.baseURL;
+            Alert.alert('Signup Failed', `${errorMessage}\nURL: ${baseURL}`);
         } finally {
             setIsLoading(false);
         }

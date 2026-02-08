@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvo
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors } from '@/theme/colors';
+import { api } from '@/services/api/client';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -22,7 +23,10 @@ export default function LoginScreen() {
             await login({ email, password });
             router.replace('/(tabs)');
         } catch (err: any) {
-            Alert.alert('Login Failed', err.response?.data?.detail || 'Invalid email or password');
+            console.error('Login Error:', err);
+            const errorMessage = err.response?.data?.detail || err.message || 'Invalid email or password';
+            const baseURL = api.defaults.baseURL;
+            Alert.alert('Login Failed', `${errorMessage}\nURL: ${baseURL}`);
         } finally {
             setIsLoading(false);
         }
