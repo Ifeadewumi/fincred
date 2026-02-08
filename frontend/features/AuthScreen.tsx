@@ -5,24 +5,25 @@ import { Button } from '../components/Button';
 import { Mail, Lock, ArrowLeft, Inbox } from 'lucide-react';
 
 export const AuthScreen: React.FC = () => {
-  const { setState, state } = useStore();
+  const { setState, login, register, isLoading, error, setError } = useStore();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [fullName, setFullName] = useState('');
   const [showVerify, setShowVerify] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
       if (isLogin) {
-        setState('main');
+        await login(email, password);
       } else {
+        await register(email, password, fullName || email.split('@')[0]);
         setShowVerify(true);
       }
-    }, 1000);
+    } catch (err) {
+      // Error is handled in store and exposed via 'error' state
+    }
   };
 
   if (showVerify) {
@@ -33,8 +34,10 @@ export const AuthScreen: React.FC = () => {
         </div>
         <h2 className="text-3xl font-bold">Check your inbox</h2>
         <p className="text-slate-500 max-w-xs">We sent a verification link to <b>{email}</b>. Please click it to activate your account.</p>
-        <Button size="full" onClick={() => setState('onboarding')}>I've verified my email</Button>
-        <button onClick={() => setShowVerify(false)} className="text-emerald-600 font-bold">Back to Sign Up</button>
+        <div className="bg-amber-50 text-amber-800 p-4 rounded-xl text-sm mb-4">
+          Note: In this dev preview, you may need to check the backend console logs for the verification link.
+        </div>
+        <Button size="full" onClick={() => setState('landing')}>Back to Home</Button>
       </div>
     );
   }
@@ -53,7 +56,22 @@ export const AuthScreen: React.FC = () => {
           {isLogin ? 'Log in to continue your journey.' : 'Let\'s start building your financial safety net.'}
         </p>
 
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm font-medium">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
+          {!isLogin && (
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700">Full Name</label>
+              <div className="relative">
+                <input type="text" required className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Email Address</label>
             <div className="relative">
@@ -70,14 +88,14 @@ export const AuthScreen: React.FC = () => {
             </div>
           </div>
 
-          <Button type="submit" variant="primary" size="full" loading={loading}>
+          <Button type="submit" variant="primary" size="full" loading={isLoading}>
             {isLogin ? 'Log In' : 'Create Account'}
           </Button>
         </form>
       </div>
 
       <div className="mt-auto py-8 text-center">
-        <button onClick={() => setIsLogin(!isLogin)} className="text-emerald-600 font-semibold">
+        <button onClick={() => { setIsLogin(!isLogin); if (setError) setError(null); }} className="text-emerald-600 font-semibold">
           {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Log In"}
         </button>
       </div>

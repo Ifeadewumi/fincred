@@ -1,6 +1,7 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserProfile, Goal, CheckIn, AppState, Tab, Message, NudgeSchedule } from './types';
+import { authService, goalsService, dashboardService, setToken, getToken, removeToken } from './services/api';
 
 interface StoreContextType {
   state: AppState;
@@ -19,6 +20,15 @@ interface StoreContextType {
   setNudgeSchedules: React.Dispatch<React.SetStateAction<NudgeSchedule[]>>;
   streak: number;
   milestones: string[];
+
+  // Auth & API
+  isLoading: boolean;
+  error: string | null;
+  setError: (e: string | null) => void;
+  login: (email: string, pass: string) => Promise<void>;
+  register: (email: string, pass: string, name: string) => Promise<void>;
+  logout: () => void;
+  refreshData: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -26,8 +36,11 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppState>('landing');
   const [activeTab, setActiveTab] = useState<Tab>('home');
-  const [streak, setStreak] = useState(4);
-  const [milestones, setMilestones] = useState<string[]>(['First Goal Created', '1 Week Streak']);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Start loading to check token
+  const [error, setError] = useState<string | null>(null);
+
+  const [streak, setStreak] = useState(0);
+  const [milestones, setMilestones] = useState<string[]>([]);
 
   const [user, setUser] = useState<UserProfile>({
     name: '',
@@ -46,14 +59,98 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'model', text: "Hello! I'm your FinCRED Coach. How can I help you with your wealth journey today?", timestamp: new Date() }
-  ]);
-  const [nudgeSchedules, setNudgeSchedules] = useState<NudgeSchedule[]>([
-    { id: '1', type: 'weekly_summary', channel: 'email', isActive: true },
-    { id: '2', type: 'pre_transfer_reminder', channel: 'push', isActive: true },
-    { id: '3', type: 'checkin_reminder', channel: 'push', isActive: true },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [nudgeSchedules, setNudgeSchedules] = useState<NudgeSchedule[]>([]);
+
+  const refreshData = async () => {
+    try {
+      setIsLoading(true);
+      const [me, goalsData, dashboardData] = await Promise.all([
+        authService.getMe().catch(e => { console.error(e); return null; }),
+        goalsService.list().catch(e => { console.error(e); return []; }),
+        dashboardService.getSummary().catch(e => { console.error(e); return null; }),
+      ]);
+
+      if (me) {
+        // Map backend user/profile to frontend UserProfile
+        setUser(prev => ({
+          ...prev,
+          name: me.profile?.full_name || me.email,
+          ...me.profile // Spread other profile fields
+        }));
+      }
+
+      if (goalsData) {
+        // Need to map backend goals to frontend Goal interface if names differ
+        // Assuming direct mapping for MVP or close enough
+        setGoals(goalsData.map((g: any) => ({
+          ...g,
+          targetAmount: g.target_amount,
+          currentAmount: g.current_balance || 0,
+          targetDate: g.target_date,
+        })));
+      }
+
+      // Handle Dashboard Data if needed
+    } catch (err: any) {
+      console.error("Failed to refresh data", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      const token = getToken();
+      if (token) {
+        await refreshData();
+        setState('main');
+      } else {
+        setIsLoading(false);
+      }
+    };
+    init();
+  }, []);
+
+  const login = async (email: string, pass: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { access_token } = await authService.login({ username: email, password: pass });
+      setToken(access_token);
+      await refreshData();
+      setState('main');
+    } catch (e: any) {
+      setError(e.message || 'Login failed');
+      throw e;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (email: string, pass: string, name: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await authService.register({ email, password: pass, full_name: name });
+      // After register, we probably need them to verify email or auto-login.
+      // API returns message. backend says: "Registration process started..."
+      // For MVP dev mode, we might want to auto-login if verify is skipped.
+      // For now, let's assume they go to verify screen or login.
+    } catch (e: any) {
+      setError(e.message || 'Registration failed');
+      throw e;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = () => {
+    removeToken();
+    setState('landing');
+    setUser({} as UserProfile);
+    setGoals([]);
+  };
 
   const addCheckIn = (c: CheckIn) => {
     setCheckIns(prev => [c, ...prev]);
@@ -66,7 +163,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       checkIns, addCheckIn,
       messages, setMessages,
       nudgeSchedules, setNudgeSchedules,
-      streak, milestones
+      streak, milestones,
+      isLoading, error, setError, login, register, logout, refreshData
     }}>
       {children}
     </StoreContext.Provider>
