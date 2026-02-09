@@ -19,7 +19,9 @@ from app.api.v0.routers import (
     education,
     health,
     goal_progress,
+    goal_progress,
     chat,
+    ai,
 )
 from app.core.config import settings
 from app.core.middleware import setup_middleware
@@ -253,6 +255,12 @@ Authorization: Bearer <your_token_here>
         chat.router,
         prefix=settings.API_V0_PREFIX,
         tags=["Chat"],
+        dependencies=[Depends(get_current_user)],
+    )
+    app.include_router(
+        ai.router,
+        prefix=settings.API_V0_PREFIX,
+        tags=["AI Analysis"],
         dependencies=[Depends(get_current_user)],
     )
     

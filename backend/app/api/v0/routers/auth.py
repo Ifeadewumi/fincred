@@ -95,13 +95,15 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
         from app.core.config import settings
         
         # In development, we can auto-verify users to simplify testing
-        is_verified = settings.ENV == "development"
+        # is_verified = settings.ENV == "development" 
+        # FIX: Always require verification to test the flow, or if we send the email, we MUST expect verification.
+        is_verified = False
         
         user = User(
             email=normalized_email,
             password_hash=hash_password(user_in.password),
-            verification_token=hash_password(verification_token) if not is_verified else None,
-            is_verified=is_verified,
+            verification_token=hash_password(verification_token),
+            is_verified=False,
         )
         db.add(user)
         db.flush()  # Use flush to get the user.id without committing

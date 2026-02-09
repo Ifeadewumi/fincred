@@ -5,12 +5,14 @@ import { Plus, Target, ChevronRight, TrendingUp, Edit3, Trash2, X, Info, Sparkle
 import { Button } from '../components/Button';
 
 export const GoalsList: React.FC = () => {
-  const { goals, setGoals } = useStore();
+  const { goals, updateGoal, deleteGoal, createActionPlan } = useStore();
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [showActionPlan, setShowActionPlan] = useState(false);
+  const [actionPlanType, setActionPlanType] = useState('automated_transfer');
+  const [actionFrequency, setActionFrequency] = useState('monthly');
   const [showUpdate, setShowUpdate] = useState(false);
   const [updateAmount, setUpdateAmount] = useState('');
   const [showAdjust, setShowAdjust] = useState(false);
-  const [showEdu, setShowEdu] = useState(false);
   const [filter, setFilter] = useState<'ACTIVE' | 'COMPLETED'>('ACTIVE');
 
   const goal = goals.find(g => g.id === selectedGoal);
@@ -18,7 +20,7 @@ export const GoalsList: React.FC = () => {
   const handleUpdate = () => {
     if (goal && updateAmount) {
       const amt = parseFloat(updateAmount);
-      setGoals(goals.map(g => g.id === goal.id ? { ...g, currentAmount: g.currentAmount + amt } : g));
+      updateGoal({ ...goal, currentAmount: goal.currentAmount + amt });
       setShowUpdate(false);
       setUpdateAmount('');
     }
@@ -27,13 +29,13 @@ export const GoalsList: React.FC = () => {
   const toggleStatus = () => {
     if (goal) {
       const newStatus = goal.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-      setGoals(goals.map(g => g.id === goal.id ? {...g, status: newStatus} : g));
+      updateGoal({ ...goal, status: newStatus });
     }
   };
 
   const markComplete = () => {
     if (goal) {
-      setGoals(goals.map(g => g.id === goal.id ? {...g, status: 'COMPLETED'} : g));
+      updateGoal({ ...goal, status: 'COMPLETED' });
       setSelectedGoal(null);
     }
   };
@@ -41,20 +43,20 @@ export const GoalsList: React.FC = () => {
   if (selectedGoal && goal) {
     return (
       <div className="p-6 space-y-8 animate-in slide-in-from-bottom duration-300">
-        <button onClick={() => setSelectedGoal(null)} className="text-slate-400 font-bold mb-4 flex items-center gap-2"><X size={18}/> Close</button>
-        
+        <button onClick={() => setSelectedGoal(null)} className="text-slate-400 font-bold mb-4 flex items-center gap-2"><X size={18} /> Close</button>
+
         <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 text-center space-y-6 relative overflow-hidden">
           {goal.status === 'PAUSED' && (
-             <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-1 rounded-full flex items-center gap-1">
-               <Pause size={10} fill="currentColor"/> PAUSED
-             </div>
+            <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-1 rounded-full flex items-center gap-1">
+              <Pause size={10} fill="currentColor" /> PAUSED
+            </div>
           )}
 
           <div className="relative inline-block">
             <svg className="w-48 h-48 -rotate-90">
               <circle cx="96" cy="96" r="80" fill="none" stroke="#f1f5f9" strokeWidth="12" />
-              <circle 
-                cx="96" cy="96" r="80" fill="none" stroke={goal.status === 'PAUSED' ? '#cbd5e1' : '#10b981'} strokeWidth="12" 
+              <circle
+                cx="96" cy="96" r="80" fill="none" stroke={goal.status === 'PAUSED' ? '#cbd5e1' : '#10b981'} strokeWidth="12"
                 strokeDasharray={`${2 * Math.PI * 80}`}
                 strokeDashoffset={`${2 * Math.PI * 80 * (1 - goal.currentAmount / goal.targetAmount)}`}
                 strokeLinecap="round"
@@ -68,8 +70,8 @@ export const GoalsList: React.FC = () => {
           </div>
 
           <h2 className="text-2xl font-bold">{goal.name}</h2>
-          
-          <div className="grid grid-cols-3 gap-2">
+
+          <div className="grid grid-cols-4 gap-2">
             <button onClick={toggleStatus} className="p-4 bg-slate-50 rounded-2xl flex flex-col items-center gap-1">
               {goal.status === 'ACTIVE' ? <Pause className="text-amber-500" /> : <Play className="text-emerald-500" />}
               <span className="text-[10px] font-bold text-slate-500 uppercase">{goal.status === 'ACTIVE' ? 'Pause' : 'Resume'}</span>
@@ -82,10 +84,84 @@ export const GoalsList: React.FC = () => {
               <Edit3 className="text-indigo-500" />
               <span className="text-[10px] font-bold text-slate-500 uppercase">Edit</span>
             </button>
+            <button onClick={() => { if (confirm('Delete this goal?')) { deleteGoal(goal.id); setSelectedGoal(null); } }} className="p-4 bg-slate-50 rounded-2xl flex flex-col items-center gap-1">
+              <Trash2 className="text-rose-500" />
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Delete</span>
+            </button>
           </div>
-          
-          <Button size="full" onClick={() => setShowUpdate(true)} disabled={goal.status !== 'ACTIVE'}>Log Manual Progress</Button>
+
+          <div className="flex gap-2">
+            <Button size="full" onClick={() => setShowUpdate(true)} disabled={goal.status !== 'ACTIVE'}>Log Progress</Button>
+            <Button variant="secondary" onClick={() => setShowActionPlan(true)}>Add Action Plan</Button>
+          </div>
         </div>
+
+        {showActionPlan && (
+          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+            <div className="bg-white rounded-3xl w-full max-w-sm p-8 space-y-6 animate-in zoom-in duration-300">
+              <h3 className="text-xl font-bold">Create Action Plan</h3>
+              <p className="text-slate-500">Automate your success.</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">TYPE</label>
+                  <select className="w-full p-3 bg-slate-50 rounded-xl" value={actionPlanType} onChange={e => setActionPlanType(e.target.value)}>
+                    <option value="automated_transfer">Automated Transfer</option>
+                    <option value="manual_habit">Manual Habit (Save Cash)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">FREQUENCY</label>
+                  <select className="w-full p-3 bg-slate-50 rounded-xl" value={actionFrequency} onChange={e => setActionFrequency(e.target.value)}>
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Bi-Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">AMOUNT</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 text-slate-400 font-bold">$</span>
+                    <input type="number" className="w-full p-3 pl-8 bg-slate-50 rounded-xl font-bold" placeholder="0.00" id="ap-amount" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="ghost" onClick={() => setShowActionPlan(false)}>Cancel</Button>
+                <Button className="flex-1" onClick={() => {
+                  const amtCtx = document.getElementById('ap-amount') as HTMLInputElement;
+                  if (amtCtx && amtCtx.value) {
+                    createActionPlan(goal.id, {
+                      type: actionPlanType,
+                      frequency: actionFrequency,
+                      amount: parseFloat(amtCtx.value)
+                    });
+                    setShowActionPlan(false);
+                    alert('Action Plan Created!');
+                  }
+                }}>Create</Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showUpdate && (
+          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+            <div className="bg-white rounded-3xl w-full max-w-sm p-8 space-y-6 animate-in zoom-in duration-300">
+              <h3 className="text-xl font-bold">Log Progress</h3>
+              <p className="text-slate-500">How much did you verify saving?</p>
+              <div className="relative">
+                <span className="absolute left-4 top-4 text-slate-400 font-bold">$</span>
+                <input type="number" className="w-full p-4 pl-8 rounded-xl border text-2xl font-bold" value={updateAmount} onChange={(e) => setUpdateAmount(e.target.value)} />
+              </div>
+              <div className="flex gap-3">
+                <Button variant="ghost" onClick={() => setShowUpdate(false)}>Cancel</Button>
+                <Button className="flex-1" onClick={handleUpdate}>Save</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

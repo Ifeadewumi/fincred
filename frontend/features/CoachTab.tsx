@@ -3,16 +3,28 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import { Button } from '../components/Button';
 import { getCheckInFeedback } from '../services/gemini';
+import { chatService } from '../services/api'; // Import chatService
 import { Star, Smile, Frown, Meh, SmilePlus, Angry, Send, History, BookOpen, ChevronRight, GraduationCap, MessageCircle, Info, Sparkles } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
 export const CoachTab: React.FC = () => {
-  const { checkIns, addCheckIn, messages, setMessages, user } = useStore();
+  const { checkIns, addCheckIn, messages, setMessages, user, sessionId, setSessionId } = useStore();
   const [mode, setMode] = useState<'chat' | 'checkin' | 'library'>('chat');
   const [checkingIn, setCheckingIn] = useState(false);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sessionId && mode === 'chat') {
+      chatService.startSession().then(res => {
+        setSessionId(res.session_id);
+        if (res.message) {
+          setMessages(prev => [...prev, { id: 'welcome', role: 'model', text: res.message, timestamp: new Date() }]);
+        }
+      }).catch(err => console.error("Failed to start chat session", err));
+    }
+  }, [mode, sessionId]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -27,12 +39,17 @@ export const CoachTab: React.FC = () => {
     setInputText('');
     setLoading(true);
 
-    // Placeholder for real AI integration
-    setTimeout(() => {
-      const modelMsg = { id: (Date.now() + 1).toString(), role: 'model' as const, text: `I'm analyzing your request regarding "${inputText}". Based on your current monthly surplus of ${user.currency}${user.monthlyIncome - user.fixedExpenses}, you have a strong buffer.`, timestamp: new Date() };
+    try {
+      if (!sessionId) throw new Error("No active session");
+      const res = await chatService.sendMessage(sessionId, userMsg.text);
+      const modelMsg = { id: (Date.now() + 1).toString(), role: 'model' as const, text: res.response, timestamp: new Date() };
       setMessages(prev => [...prev, modelMsg]);
+    } catch (error) {
+      console.error("Chat error", error);
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'model', text: "I'm having trouble connecting right now. Please try again.", timestamp: new Date() }]);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const renderChat = () => (
@@ -40,9 +57,8 @@ export const CoachTab: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
         {messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] p-4 rounded-2xl ${
-              m.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border rounded-tl-none shadow-sm'
-            }`}>
+            <div className={`max-w-[85%] p-4 rounded-2xl ${m.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border rounded-tl-none shadow-sm'
+              }`}>
               <p className="text-sm leading-relaxed">{m.text}</p>
               <div className={`text-[10px] mt-1 opacity-50 ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
                 {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -62,7 +78,7 @@ export const CoachTab: React.FC = () => {
         <div ref={chatEndRef} />
       </div>
       <form onSubmit={handleSendMessage} className="p-4 bg-white border-t flex gap-2">
-        <input 
+        <input
           className="flex-1 bg-slate-50 border-none rounded-xl px-4 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
           placeholder="Ask your coach anything..."
           value={inputText}

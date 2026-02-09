@@ -57,6 +57,10 @@ export const authService = {
   getMe: () => api.get<any>('/users/me'),
 };
 
+export const userService = {
+  updateProfile: (data: any) => api.put<any>('/users/me/profile', data),
+};
+
 // Re-implementing login to support Form Data for OAuth2
 const loginRequest = async (username: string, password: string) => {
   const formData = new URLSearchParams();
@@ -87,12 +91,48 @@ export const goalsService = {
   list: () => api.get<any[]>('/goals'),
   create: (goal: any) => api.post<any>('/goals', goal),
   update: (id: string, goal: any) => api.put<any>(`/goals/${id}`, goal),
+  delete: (id: string) => api.delete<void>(`/goals/${id}`),
 };
 
 export const dashboardService = {
   getSummary: () => api.get<any>('/dashboard'),
 };
 
+export const aiService = {
+  analyzeFeasibility: (data: { monthly_income: number; fixed_expenses: number; total_debt: number; goal_name: string; goal_target: number; monthly_contribution: number }) =>
+    request<{ analysis: string }>('/ai/feasibility', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getCheckInFeedback: (data: { score: number; mood: number; notes: string }) =>
+    request<{ feedback: string }>('/ai/checkin-feedback', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getQuote: () => request<{ quote: string }>('/ai/quote'),
+};
+
 export const onboardingService = {
   submitSnapshot: (data: any) => api.put<any>('/snapshot', data),
+};
+
+export const chatService = {
+  startSession: () => api.post<{ session_id: string; message: string }>('/chat/session', {}),
+  sendMessage: (sessionId: string, message: string) => api.post<{ response: string }>('/chat/message', { session_id: sessionId, message }),
+};
+
+export const actionPlanService = {
+  list: () => api.get<any[]>('/action-plans'),
+  create: (goalId: string, plan: any) => api.post<any>(`/goals/${goalId}/action-plans`, plan),
+  update: (id: string, plan: any) => api.put<any>(`/action-plans/${id}`, plan),
+  delete: (id: string) => api.delete<void>(`/action-plans/${id}`),
+};
+
+export const nudgeService = {
+  list: () => api.get<any[]>('/notifications'),
+  create: (nudge: any) => api.post<any>('/notifications', nudge),
+  update: (id: string, nudge: any) => api.put<any>(`/notifications/${id}`, nudge),
+  delete: (id: string) => api.delete<void>(`/notifications/${id}`),
 };

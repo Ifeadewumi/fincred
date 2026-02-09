@@ -7,7 +7,7 @@ import { ChevronRight, Plus, Trash2, CheckCircle, Info, ShieldCheck, Zap, Toggle
 import { getFeasibilityExplanation } from '../services/gemini';
 
 export const OnboardingFlow: React.FC = () => {
-  const { setState, setUser, user, setGoals } = useStore();
+  const { setState, setUser, user, setGoals, saveUser, saveSnapshot, saveGoal, updateGoal } = useStore();
   const [step, setStep] = useState(0);
 
   const nextStep = () => setStep(step + 1);
@@ -15,15 +15,15 @@ export const OnboardingFlow: React.FC = () => {
 
   const renderStep = () => {
     switch (step) {
-      case 0: return <IntroStep next={nextStep} user={user} setUser={setUser} />;
+      case 0: return <IntroStep next={nextStep} user={user} setUser={setUser} saveUser={saveUser} />;
       case 1: return <FinancialSnapshotIncome next={nextStep} user={user} setUser={setUser} />;
       case 2: return <FinancialSnapshotExpenses next={nextStep} user={user} setUser={setUser} />;
       case 3: return <FinancialSnapshotDebts next={nextStep} user={user} setUser={setUser} />;
-      case 4: return <FinancialSnapshotAssets next={nextStep} user={user} setUser={setUser} />;
+      case 4: return <FinancialSnapshotAssets next={nextStep} user={user} setUser={setUser} saveSnapshot={saveSnapshot} />;
       case 5: return <GoalDiscovery next={nextStep} user={user} setGoals={setGoals} />;
       case 6: return <PlanReview next={nextStep} user={user} prev={prevStep} />;
-      case 7: return <CommitmentStep next={nextStep} />;
-      case 8: return <ActionSetup finish={() => setState('main')} />;
+      case 7: return <CommitmentStep next={nextStep} saveGoal={saveGoal} />;
+      case 8: return <ActionSetup finish={() => setState('main')} updateGoal={updateGoal} />;
       default: return null;
     }
   };
@@ -32,11 +32,10 @@ export const OnboardingFlow: React.FC = () => {
     <div className="min-h-screen bg-slate-50 p-6 pb-24 flex flex-col">
       <div className="flex items-center gap-2 mb-8">
         {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-          <div 
-            key={i} 
-            className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-              i <= step ? 'bg-emerald-500' : 'bg-slate-200'
-            }`} 
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= step ? 'bg-emerald-500' : 'bg-slate-200'
+              }`}
           />
         ))}
       </div>
@@ -45,7 +44,7 @@ export const OnboardingFlow: React.FC = () => {
   );
 };
 
-const IntroStep = ({ next, user, setUser }: any) => {
+const IntroStep = ({ next, user, setUser, saveUser }: any) => {
   const personas: Persona[] = ['Crush Debt', 'Build Safety Net', 'Start FIRE'];
   return (
     <div className="space-y-8 animate-in slide-in-from-right duration-300">
@@ -64,13 +63,13 @@ const IntroStep = ({ next, user, setUser }: any) => {
       </div>
       <div className="space-y-4">
         <label className="text-sm font-semibold text-slate-500 uppercase">Your Info</label>
-        <input placeholder="Name" className="w-full p-4 rounded-xl border border-slate-200" value={user.name} onChange={(e) => setUser({...user, name: e.target.value})} />
+        <input placeholder="Name" className="w-full p-4 rounded-xl border border-slate-200" value={user.name} onChange={(e) => setUser({ ...user, name: e.target.value })} />
         <div className="flex gap-3">
-          <input type="number" placeholder="Age" className="w-20 p-4 rounded-xl border border-slate-200" value={user.age || ''} onChange={(e) => setUser({...user, age: parseInt(e.target.value)})} />
-          <input placeholder="Country" className="flex-1 p-4 rounded-xl border border-slate-200" value={user.country} onChange={(e) => setUser({...user, country: e.target.value})} />
+          <input type="number" placeholder="Age" className="w-20 p-4 rounded-xl border border-slate-200" value={user.age || ''} onChange={(e) => setUser({ ...user, age: parseInt(e.target.value) })} />
+          <input placeholder="Country" className="flex-1 p-4 rounded-xl border border-slate-200" value={user.country} onChange={(e) => setUser({ ...user, country: e.target.value })} />
         </div>
       </div>
-      <Button disabled={!user.name || !user.persona} onClick={next} size="full">Continue</Button>
+      <Button disabled={!user.name || !user.persona} onClick={() => { saveUser({ name: user.name, persona: user.persona, age: user.age, country: user.country }); next(); }} size="full">Continue</Button>
     </div>
   );
 };
@@ -78,19 +77,19 @@ const IntroStep = ({ next, user, setUser }: any) => {
 const FinancialSnapshotIncome = ({ next, user, setUser }: any) => (
   <div className="space-y-8 animate-in slide-in-from-right">
     <div className="flex items-start gap-4">
-        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
-        <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100">
-          <p>What's your monthly net income?</p>
-        </div>
+      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
+      <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100">
+        <p>What's your monthly net income?</p>
+      </div>
     </div>
     <div className="space-y-6">
       <div className="relative">
         <span className="absolute left-4 top-4 text-slate-400 font-bold">$</span>
-        <input type="number" className="w-full p-4 pl-8 rounded-xl border text-2xl font-bold" value={user.monthlyIncome || ''} onChange={(e) => setUser({...user, monthlyIncome: parseFloat(e.target.value)})} />
+        <input type="number" className="w-full p-4 pl-8 rounded-xl border text-2xl font-bold" value={user.monthlyIncome || ''} onChange={(e) => setUser({ ...user, monthlyIncome: parseFloat(e.target.value) })} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         {['Monthly', 'Bi-weekly'].map(f => (
-          <button key={f} onClick={() => setUser({...user, payFrequency: f as any})} className={`p-4 rounded-xl border-2 font-semibold ${user.payFrequency === f ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'}`}>{f}</button>
+          <button key={f} onClick={() => setUser({ ...user, payFrequency: f as any })} className={`p-4 rounded-xl border-2 font-semibold ${user.payFrequency === f ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'}`}>{f}</button>
         ))}
       </div>
     </div>
@@ -101,14 +100,14 @@ const FinancialSnapshotIncome = ({ next, user, setUser }: any) => (
 const FinancialSnapshotExpenses = ({ next, user, setUser }: any) => (
   <div className="space-y-8 animate-in slide-in-from-right">
     <div className="flex items-start gap-4">
-        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
-        <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100">
-          <p>How much are your total fixed monthly expenses (Rent, Food, etc)?</p>
-        </div>
+      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
+      <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100">
+        <p>How much are your total fixed monthly expenses (Rent, Food, etc)?</p>
+      </div>
     </div>
     <div className="relative">
       <span className="absolute left-4 top-4 text-slate-400 font-bold">$</span>
-      <input type="number" className="w-full p-4 pl-8 rounded-xl border text-2xl font-bold" value={user.fixedExpenses || ''} onChange={(e) => setUser({...user, fixedExpenses: parseFloat(e.target.value)})} />
+      <input type="number" className="w-full p-4 pl-8 rounded-xl border text-2xl font-bold" value={user.fixedExpenses || ''} onChange={(e) => setUser({ ...user, fixedExpenses: parseFloat(e.target.value) })} />
     </div>
     <Button onClick={next} size="full" disabled={!user.fixedExpenses}>Next</Button>
   </div>
@@ -120,26 +119,26 @@ const FinancialSnapshotDebts = ({ next, user, setUser }: any) => {
   return (
     <div className="space-y-8 animate-in slide-in-from-right">
       <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
-          <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100">
-            <p>Any debts we should prioritize?</p>
-          </div>
+        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
+        <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100">
+          <p>Any debts we should prioritize?</p>
+        </div>
       </div>
       <div className="space-y-4">
         {user.debts.map((debt: Debt) => (
           <div key={debt.id} className="bg-white p-4 rounded-xl border flex justify-between items-center">
             <div><div className="font-bold">{debt.name}</div><div className="text-sm text-slate-500">${debt.balance} • {debt.interestRate}%</div></div>
-            <button onClick={() => setUser({...user, debts: user.debts.filter((d: any) => d.id !== debt.id)})} className="text-slate-300 hover:text-rose-500"><Trash2 size={20} /></button>
+            <button onClick={() => setUser({ ...user, debts: user.debts.filter((d: any) => d.id !== debt.id) })} className="text-slate-300 hover:text-rose-500"><Trash2 size={20} /></button>
           </div>
         ))}
         {isAdding ? (
           <div className="bg-white p-6 rounded-xl border-2 border-emerald-500 space-y-4">
-            <input placeholder="Name" className="w-full p-3 border rounded-lg" value={newDebt.name} onChange={e => setNewDebt({...newDebt, name: e.target.value})} />
+            <input placeholder="Name" className="w-full p-3 border rounded-lg" value={newDebt.name} onChange={e => setNewDebt({ ...newDebt, name: e.target.value })} />
             <div className="grid grid-cols-2 gap-3">
-              <input type="number" placeholder="Balance" className="w-full p-3 border rounded-lg" value={newDebt.balance || ''} onChange={e => setNewDebt({...newDebt, balance: parseFloat(e.target.value)})} />
-              <input type="number" placeholder="APR %" className="w-full p-3 border rounded-lg" value={newDebt.interestRate || ''} onChange={e => setNewDebt({...newDebt, interestRate: parseFloat(e.target.value)})} />
+              <input type="number" placeholder="Balance" className="w-full p-3 border rounded-lg" value={newDebt.balance || ''} onChange={e => setNewDebt({ ...newDebt, balance: parseFloat(e.target.value) })} />
+              <input type="number" placeholder="APR %" className="w-full p-3 border rounded-lg" value={newDebt.interestRate || ''} onChange={e => setNewDebt({ ...newDebt, interestRate: parseFloat(e.target.value) })} />
             </div>
-            <div className="flex gap-3"><Button variant="ghost" onClick={() => setIsAdding(false)}>Cancel</Button><Button className="flex-1" onClick={() => { if(newDebt.name) { setUser({...user, debts: [...user.debts, {...newDebt, id: Date.now().toString()}]}); setIsAdding(false); setNewDebt({name:'', balance:0, interestRate:0}); } }}>Save</Button></div>
+            <div className="flex gap-3"><Button variant="ghost" onClick={() => setIsAdding(false)}>Cancel</Button><Button className="flex-1" onClick={() => { if (newDebt.name) { setUser({ ...user, debts: [...user.debts, { ...newDebt, id: Date.now().toString() }] }); setIsAdding(false); setNewDebt({ name: '', balance: 0, interestRate: 0 }); } }}>Save</Button></div>
           </div>
         ) : (
           <button onClick={() => setIsAdding(true)} className="w-full py-4 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 text-slate-400 font-semibold"><Plus size={20} /> Add Debt</button>
@@ -150,29 +149,29 @@ const FinancialSnapshotDebts = ({ next, user, setUser }: any) => {
   );
 };
 
-const FinancialSnapshotAssets = ({ next, user, setUser }: any) => {
+const FinancialSnapshotAssets = ({ next, user, setUser, saveSnapshot }: any) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newAsset, setNewAsset] = useState<Partial<Asset>>({ name: '', balance: 0 });
   return (
     <div className="space-y-8 animate-in slide-in-from-right">
       <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
-          <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100">
-            <p>What about your current savings or assets?</p>
-          </div>
+        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
+        <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100">
+          <p>What about your current savings or assets?</p>
+        </div>
       </div>
       <div className="space-y-4">
         {user.assets.map((asset: Asset) => (
           <div key={asset.id} className="bg-white p-4 rounded-xl border flex justify-between items-center">
             <div><div className="font-bold">{asset.name}</div><div className="text-sm text-slate-500">${asset.balance}</div></div>
-            <button onClick={() => setUser({...user, assets: user.assets.filter((a: any) => a.id !== asset.id)})} className="text-slate-300 hover:text-rose-500"><Trash2 size={20} /></button>
+            <button onClick={() => setUser({ ...user, assets: user.assets.filter((a: any) => a.id !== asset.id) })} className="text-slate-300 hover:text-rose-500"><Trash2 size={20} /></button>
           </div>
         ))}
         {isAdding ? (
           <div className="bg-white p-6 rounded-xl border-2 border-emerald-500 space-y-4">
-            <input placeholder="Asset Name" className="w-full p-3 border rounded-lg" value={newAsset.name} onChange={e => setNewAsset({...newAsset, name: e.target.value})} />
-            <input type="number" placeholder="Balance" className="w-full p-3 border rounded-lg" value={newAsset.balance || ''} onChange={e => setNewAsset({...newAsset, balance: parseFloat(e.target.value)})} />
-            <div className="flex gap-3"><Button variant="ghost" onClick={() => setIsAdding(false)}>Cancel</Button><Button className="flex-1" onClick={() => { if(newAsset.name) { setUser({...user, assets: [...user.assets, {...newAsset, id: Date.now().toString()}]}); setIsAdding(false); setNewAsset({name:'', balance:0}); } }}>Save</Button></div>
+            <input placeholder="Asset Name" className="w-full p-3 border rounded-lg" value={newAsset.name} onChange={e => setNewAsset({ ...newAsset, name: e.target.value })} />
+            <input type="number" placeholder="Balance" className="w-full p-3 border rounded-lg" value={newAsset.balance || ''} onChange={e => setNewAsset({ ...newAsset, balance: parseFloat(e.target.value) })} />
+            <div className="flex gap-3"><Button variant="ghost" onClick={() => setIsAdding(false)}>Cancel</Button><Button className="flex-1" onClick={() => { if (newAsset.name) { setUser({ ...user, assets: [...user.assets, { ...newAsset, id: Date.now().toString() }] }); setIsAdding(false); setNewAsset({ name: '', balance: 0 }); } }}>Save</Button></div>
           </div>
         ) : (
           <button onClick={() => setIsAdding(true)} className="w-full py-4 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 text-slate-400 font-semibold"><Plus size={20} /> Add Asset</button>
@@ -192,8 +191,8 @@ const GoalDiscovery = ({ next, user, setGoals }: any) => {
   return (
     <div className="space-y-8 animate-in slide-in-from-right">
       <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
-          <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100"><p>Let's pick your first target.</p></div>
+        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">C</div>
+        <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-100"><p>Let's pick your first target.</p></div>
       </div>
       <div className="space-y-4">
         {suggestions.map((s, i) => (
@@ -241,7 +240,7 @@ const PlanReview = ({ next, user, prev }: any) => {
           <div className="flex justify-between text-sm text-slate-500"><span>Required Monthly</span><span className="font-bold text-slate-900">${goal.monthlyContribution}</span></div>
           <div className="flex justify-between text-sm text-slate-500"><span>Remaining Income</span><span className="font-bold text-slate-900">${user.monthlyIncome - user.fixedExpenses - goal.monthlyContribution}</span></div>
         </div>
-        <button onClick={() => setShowEdu(true)} className="w-full text-indigo-600 font-bold text-sm flex items-center justify-center gap-2"><Info size={16}/> Why is this "{verdict}"?</button>
+        <button onClick={() => setShowEdu(true)} className="w-full text-indigo-600 font-bold text-sm flex items-center justify-center gap-2"><Info size={16} /> Why is this "{verdict}"?</button>
       </div>
       <div className="flex gap-4">
         <Button variant="outline" className="flex-1" onClick={prev}>Adjust Goal</Button>
@@ -261,7 +260,7 @@ const PlanReview = ({ next, user, prev }: any) => {
   );
 };
 
-const CommitmentStep = ({ next }: any) => {
+const CommitmentStep = ({ next, saveGoal }: any) => {
   const { goals, setGoals } = useStore();
   const [why, setWhy] = useState('');
   const [pact, setPact] = useState(false);
@@ -279,12 +278,17 @@ const CommitmentStep = ({ next }: any) => {
           <p className="text-emerald-900 font-medium leading-snug">I commit to sticking to this for at least 30 days to build the habit.</p>
         </div>
       </div>
-      <Button size="full" disabled={!why || !pact} onClick={() => { setGoals(goals.map(g => ({...g, why}))); next(); }}>Seal the Pact</Button>
+      <Button size="full" disabled={!why || !pact} onClick={() => {
+        const updatedGoal = { ...goals[0], why };
+        setGoals([updatedGoal]);
+        saveGoal(updatedGoal);
+        next();
+      }}>Seal the Pact</Button>
     </div>
   );
 };
 
-const ActionSetup = ({ finish }: any) => {
+const ActionSetup = ({ finish, updateGoal }: any) => {
   const { goals, setGoals } = useStore();
   const goal = goals[0];
   const [automated, setAutomated] = useState(false);
@@ -305,7 +309,12 @@ const ActionSetup = ({ finish }: any) => {
           <ShieldCheck className="shrink-0" /> Note: FinCRED doesn't move your money yet. Please ensure this is set up in your banking app.
         </div>
       </div>
-      <Button size="full" onClick={() => { setGoals(goals.map(g => ({...g, isAutomated: automated}))); finish(); }}>Finish & Start My Journey</Button>
+      <Button size="full" onClick={() => {
+        const updatedGoal = { ...goals[0], isAutomated: automated };
+        setGoals([updatedGoal]);
+        updateGoal(updatedGoal);
+        finish();
+      }}>Finish & Start My Journey</Button>
     </div>
   );
 };

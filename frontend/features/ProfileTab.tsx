@@ -3,20 +3,24 @@ import React, { useState } from 'react';
 import { useStore } from '../store';
 import { Settings, LogOut, ChevronRight, DollarSign, Wallet, Bell, Shield, User, X, Check, Mail, Smartphone, Info } from 'lucide-react';
 import { Button } from '../components/Button';
+import { onboardingService } from '../services/api';
 
 export const ProfileTab: React.FC = () => {
-  const { user, setUser, setState, nudgeSchedules, setNudgeSchedules } = useStore();
+  const { user, setUser, setState, nudgeSchedules, setNudgeSchedules, saveUser, saveSnapshot, toggleNudge: storeToggleNudge } = useStore();
   const [editMode, setEditMode] = useState<'profile' | 'snapshot' | 'nudges' | null>(null);
 
   const toggleNudge = (id: string) => {
-    setNudgeSchedules(prev => prev.map(n => n.id === id ? {...n, isActive: !n.isActive} : n));
+    const nudge = nudgeSchedules.find(n => n.id === id);
+    if (nudge) {
+      storeToggleNudge(id, !nudge.isActive);
+    }
   };
 
   if (editMode === 'nudges') {
     return (
       <div className="p-6 space-y-6 bg-white min-h-screen animate-in slide-in-from-right">
         <div className="flex justify-between items-center">
-          <button onClick={() => setEditMode(null)}><X className="text-slate-400"/></button>
+          <button onClick={() => setEditMode(null)}><X className="text-slate-400" /></button>
           <h2 className="font-bold text-lg">Nudges & Reminders</h2>
           <button onClick={() => setEditMode(null)} className="text-emerald-600 font-bold">Done</button>
         </div>
@@ -26,14 +30,14 @@ export const ProfileTab: React.FC = () => {
             <div key={n.id} className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm">
-                  {n.channel === 'email' ? <Mail size={20}/> : <Smartphone size={20}/>}
+                  {n.channel === 'email' ? <Mail size={20} /> : <Smartphone size={20} />}
                 </div>
                 <div>
                   <div className="font-bold text-sm capitalize">{n.type.replace(/_/g, ' ')}</div>
                   <div className="text-[10px] text-slate-400 uppercase font-bold">{n.channel}</div>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => toggleNudge(n.id)}
                 className={`w-12 h-6 rounded-full relative transition-colors ${n.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}
               >
@@ -43,13 +47,87 @@ export const ProfileTab: React.FC = () => {
           ))}
         </div>
         <div className="p-4 bg-indigo-50 rounded-2xl text-indigo-900 text-[10px] font-bold flex gap-2">
-          <Info size={14}/> ALL NUDGES ARE POWERED BY ADAPTIVE AI LOGIC
+          <Info size={14} /> ALL NUDGES ARE POWERED BY ADAPTIVE AI LOGIC
         </div>
       </div>
     );
   }
 
-  // ... (editMode === 'profile' and 'snapshot' omitted for brevity, same as previous implementation)
+  if (editMode === 'profile') {
+    const [formData, setFormData] = useState({ name: user.name, email: 'user@example.com' }); // Email mock
+    return (
+      <div className="p-6 space-y-6 bg-white min-h-screen animate-in slide-in-from-right">
+        <div className="flex justify-between items-center">
+          <button onClick={() => setEditMode(null)} className="text-slate-400 font-bold flex gap-2"><X size={20} /> Cancel</button>
+          <h2 className="font-bold text-lg">Edit Profile</h2>
+        </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">Full Name</label>
+            <input className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+          </div>
+          {/* Email is usually read-only or requires re-auth */}
+          <div className="space-y-2 opacity-50">
+            <label className="text-sm font-bold text-slate-700">Email (Managed by Auth)</label>
+            <input className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200" value={formData.email} disabled />
+          </div>
+        </div>
+        <Button size="full" onClick={async () => {
+          await saveUser({ name: formData.name });
+          setEditMode(null);
+        }}>Save Changes</Button>
+      </div>
+    );
+  }
+
+  if (editMode === 'snapshot') {
+    const [snapshot, setSnapshot] = useState({
+      income: user.monthlyIncome,
+      expenses: user.fixedExpenses
+    });
+    return (
+      <div className="p-6 space-y-6 bg-white min-h-screen animate-in slide-in-from-right">
+        <div className="flex justify-between items-center">
+          <button onClick={() => setEditMode(null)} className="text-slate-400 font-bold flex gap-2"><X size={20} /> Cancel</button>
+          <h2 className="font-bold text-lg">Financial Snapshot</h2>
+        </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">Monthly Net Income</label>
+            <div className="relative">
+              <span className="absolute left-4 top-4 text-slate-400 font-bold">$</span>
+              <input type="number" className="w-full p-4 pl-8 bg-slate-50 rounded-xl border border-slate-200 font-bold" value={snapshot.income} onChange={e => setSnapshot({ ...snapshot, income: parseFloat(e.target.value) })} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">Fixed Monthly Expenses</label>
+            <div className="relative">
+              <span className="absolute left-4 top-4 text-slate-400 font-bold">$</span>
+              <input type="number" className="w-full p-4 pl-8 bg-slate-50 rounded-xl border border-slate-200 font-bold" value={snapshot.expenses} onChange={e => setSnapshot({ ...snapshot, expenses: parseFloat(e.target.value) })} />
+            </div>
+          </div>
+        </div>
+        <Button size="full" onClick={async () => {
+          const updatedUser = { ...user, monthlyIncome: snapshot.income, fixedExpenses: snapshot.expenses };
+          setUser(updatedUser);
+
+          try {
+            await onboardingService.submitSnapshot({
+              monthly_income: snapshot.income,
+              fixed_expenses: snapshot.expenses,
+              pay_frequency: user.payFrequency,
+              currency: user.currency,
+              debt_total: user.debts.reduce((acc, d) => acc + d.balance, 0),
+              savings_balance: user.assets.reduce((acc, a) => acc + a.balance, 0),
+            });
+            setEditMode(null);
+          } catch (e) {
+            console.error("Failed to save snapshot", e);
+          }
+        }}>Update Snapshot</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-8 pb-24">

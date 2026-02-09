@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserProfile, Goal, CheckIn, AppState, Tab, Message, NudgeSchedule } from './types';
-import { authService, goalsService, dashboardService, setToken, getToken, removeToken } from './services/api';
+import { authService, goalsService, dashboardService, onboardingService, actionPlanService, nudgeService, userService, setToken, getToken, removeToken } from './services/api';
 
 interface StoreContextType {
   state: AppState;
@@ -20,6 +20,8 @@ interface StoreContextType {
   setNudgeSchedules: React.Dispatch<React.SetStateAction<NudgeSchedule[]>>;
   streak: number;
   milestones: string[];
+  sessionId: string | null;
+  setSessionId: (id: string | null) => void;
 
   // Auth & API
   isLoading: boolean;
@@ -29,6 +31,15 @@ interface StoreContextType {
   register: (email: string, pass: string, name: string) => Promise<void>;
   logout: () => void;
   refreshData: () => Promise<void>;
+
+  // Persistence
+  saveSnapshot: () => Promise<void>;
+  saveGoal: (goal: Goal) => Promise<void>;
+  updateGoal: (goal: Goal) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
+  saveUser: (u: Partial<UserProfile>) => Promise<void>;
+  createActionPlan: (goalId: string, action: any) => Promise<void>;
+  toggleNudge: (id: string, isActive: boolean) => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -60,6 +71,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [goals, setGoals] = useState<Goal[]>([]);
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [nudgeSchedules, setNudgeSchedules] = useState<NudgeSchedule[]>([]);
 
   const refreshData = async () => {
@@ -69,6 +81,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         authService.getMe().catch(e => { console.error(e); return null; }),
         goalsService.list().catch(e => { console.error(e); return []; }),
         dashboardService.getSummary().catch(e => { console.error(e); return null; }),
+        nudgeService.list().catch(e => { console.error(e); return []; }),
       ]);
 
       if (me) {
@@ -81,8 +94,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
 
       if (goalsData) {
-        // Need to map backend goals to frontend Goal interface if names differ
-        // Assuming direct mapping for MVP or close enough
         setGoals(goalsData.map((g: any) => ({
           ...g,
           targetAmount: g.target_amount,
@@ -133,10 +144,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setError(null);
     try {
       await authService.register({ email, password: pass, full_name: name });
-      // After register, we probably need them to verify email or auto-login.
-      // API returns message. backend says: "Registration process started..."
-      // For MVP dev mode, we might want to auto-login if verify is skipped.
-      // For now, let's assume they go to verify screen or login.
     } catch (e: any) {
       setError(e.message || 'Registration failed');
       throw e;
@@ -152,6 +159,108 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setGoals([]);
   };
 
+  const saveSnapshot = async () => {
+    try {
+      // Map frontend user profile to backend snapshot format
+      const snapshotData = {
+        monthly_income: user.monthlyIncome,
+        pay_frequency: user.payFrequency || 'Monthly',
+        currency: user.currency || 'USD',
+        fixed_expenses: user.fixedExpenses,
+        debt_total: user.debts.reduce((acc, d) => acc + d.balance, 0),
+        savings_balance: user.assets.reduce((acc, a) => acc + a.balance, 0),
+      };
+      await onboardingService.submitSnapshot(snapshotData);
+    } catch (e) {
+      console.error("Failed to save snapshot", e);
+    }
+  };
+
+  const saveGoal = async (goal: Goal) => {
+    try {
+      const payload = {
+        name: goal.name,
+        target_amount: goal.targetAmount,
+        target_date: goal.targetDate,
+        priority: goal.priority?.toUpperCase() || 'MEDIUM',
+        status: 'ACTIVE',
+        why: goal.why,
+      };
+      await goalsService.create(payload);
+      await refreshData();
+    } catch (e) {
+      console.error("Failed to save goal", e);
+    }
+  };
+
+  const updateGoal = async (goal: Goal) => {
+    try {
+      const payload = {
+        name: goal.name,
+        target_amount: goal.targetAmount,
+        current_balance: goal.currentAmount,
+        status: goal.status,
+      };
+      await goalsService.update(goal.id, payload);
+      // Optimistic update
+      setGoals(prev => prev.map(g => g.id === goal.id ? goal : g));
+    } catch (e) {
+      console.error("Failed to update goal", e);
+      await refreshData();
+    }
+  };
+
+
+  const deleteGoal = async (id: string) => {
+    try {
+      await goalsService.delete(id);
+      setGoals(prev => prev.filter(g => g.id !== id));
+    } catch (e) {
+      console.error("Failed to delete goal", e);
+      await refreshData();
+    }
+  };
+
+  const saveUser = async (u: Partial<UserProfile>) => {
+    setUser(prev => ({ ...prev, ...u }));
+    try {
+      // Map frontend UserProfile fields to backend ProfileUpdate schema
+      // Backend expects: full_name, age, country, persona, etc.
+      // We need to be careful with field names.
+      // UserProfile has 'name', backend has 'full_name'.
+      const payload: any = { ...u };
+      if (u.name) payload.full_name = u.name;
+
+      await userService.updateProfile(payload);
+    } catch (e) {
+      console.error("Failed to save user profile", e);
+    }
+  };
+
+  const createActionPlan = async (goalId: string, action: any) => {
+    try {
+      await actionPlanService.create(goalId, action);
+      // Refresh to see if it affects anything (e.g. nudges)
+    } catch (e) {
+      console.error("Failed to create action plan", e);
+    }
+  };
+
+  const toggleNudge = async (id: string, isActive: boolean) => {
+    // Optimistic update
+    setNudgeSchedules(prev => prev.map(n => n.id === id ? { ...n, isActive } : n));
+
+    try {
+      // Backend expects 'active' | 'paused'
+      const status = isActive ? 'active' : 'paused';
+
+      await nudgeService.update(id, { status });
+    } catch (e) {
+      console.error("Failed to toggle nudge", e);
+      await refreshData();
+    }
+  };
+
   const addCheckIn = (c: CheckIn) => {
     setCheckIns(prev => [c, ...prev]);
   };
@@ -161,10 +270,11 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       state, setState, activeTab, setActiveTab,
       user, setUser, goals, setGoals,
       checkIns, addCheckIn,
-      messages, setMessages,
+      messages, setMessages, sessionId, setSessionId,
       nudgeSchedules, setNudgeSchedules,
       streak, milestones,
-      isLoading, error, setError, login, register, logout, refreshData
+      isLoading, error, setError, login, register, logout, refreshData,
+      saveSnapshot, saveGoal, updateGoal, deleteGoal, saveUser, createActionPlan, toggleNudge
     }}>
       {children}
     </StoreContext.Provider>
