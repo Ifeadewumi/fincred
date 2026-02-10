@@ -348,3 +348,143 @@ Typical status codes:
 - `409` – conflicts (e.g., duplicate email on registration).
 
 This design is intentionally minimal and focused on enabling the core flows: onboarding, planning, action setup, check-ins, and nudges. You can refine payloads and add pagination/filters as the product evolves.
+
+---
+
+## 12. AI Chat & Conversation
+
+The FinCred AI Assistant enables conversational financial coaching via natural language dialogue.
+
+### Base URL
+All endpoints under `/api/v0/chat`.
+
+### Endpoints
+
+#### POST `/chat/start`
+Start a new conversation session.
+
+**Request:**
+```json
+{
+  "intent": "general | onboarding | goal_discovery | planning | checkin"
+}
+```
+
+**Response:**
+```json
+{
+  "session_id": "uuid",
+  "greeting": "Hi! I'm your financial coach...",
+  "intent": "general"
+}
+```
+
+**Response Codes:**
+- `200` — Success
+- `401` — Unauthorized
+- `503` — LLM service unavailable
+
+---
+
+#### POST `/chat/message`
+Send a message to the AI coach.
+
+**Request:**
+```json
+{
+  "message": "Can I afford a $500 vacation?",
+  "session_id": "uuid (optional)"
+}
+```
+
+**Response:**
+```json
+{
+  "session_id": "uuid",
+  "response": "Based on your current plan...",
+  "intent": "planning"
+}
+```
+
+---
+
+#### POST `/chat/message/stream`
+Streaming response (Server-Sent Events) for real-time AI output.
+
+**Response Format:**
+```
+data: Hello
+data: ! How
+data: can
+data: I
+data: help
+data: ?
+data: [DONE]
+```
+
+---
+
+#### GET `/chat/session/{session_id}`
+Get conversation session info.
+
+**Response:**
+```json
+{
+  "session_id": "uuid",
+  "intent": "planning",
+  "message_count": 5,
+  "created_at": "2026-01-15T10:30:00Z",
+  "updated_at": "2026-01-15T10:35:00Z"
+}
+```
+
+---
+
+#### DELETE `/chat/session/{session_id}`
+End and clear a conversation session.
+
+**Response:**
+```json
+{
+  "status": "cleared",
+  "session_id": "uuid"
+}
+```
+
+---
+
+#### POST `/chat/session/{session_id}/refresh`
+Refresh the user context in an existing session.
+
+**Response:**
+```json
+{
+  "status": "refreshed",
+  "session_id": "uuid"
+}
+```
+
+---
+
+#### GET `/chat/health`
+Check LLM service availability.
+
+**Response:**
+```json
+{
+  "llm_available": true,
+  "active_sessions": 12,
+  "providers": ["gemini:gemini-2.0-flash"]
+}
+```
+
+---
+
+### LLM Configuration
+- **Provider:** Google Gemini (configurable via `GOOGLE_AI_API_KEY`)
+- **Fallback:** `gemini-1.5-flash` if primary fails
+- **Streaming:** Supported via Server-Sent Events
+
+### Rate Limiting
+- **Limit:** 60 requests per minute (shared with other endpoints)
+- **429 Response:** Rate limit exceeded

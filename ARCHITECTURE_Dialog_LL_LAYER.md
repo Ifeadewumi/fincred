@@ -31,13 +31,32 @@ Non-functional considerations
 - Observability: trace prompts, responses, and data passed between modules for debugging.
 
 Technology choices (illustrative)
-- LLM provider: TBD (e.g., OpenAI, etc.); ensure prompt engineering strategies and guardrails are documented.
-- Prompt templates: define reusable templates for onboarding, goal discovery, planning explanations, and education delivery.
+- LLM provider: **Google Gemini** (implemented in `backend/app/llm/providers/gemini.py`)
+  - Configurable via `GOOGLE_AI_API_KEY`
+  - Fallback chain support for resilience
+  - Model: `gemini-2.0-flash` (configurable via `LLM_MODEL_CHAIN`)
+- Prompt templates: Defined in `app/llm/prompts/manager.py`
+- Conversation Service: Implemented in `app/services/dialog/conversation.py`
+- Intent Detection: Rule-based keyword matching in `app/services/dialog/intents.py`
+- Context Builder: `app/services/dialog/context.py` for user data aggregation
 
 Interfaces with existing architecture
-- Reads: Snapshot, Goals, Persona hints, Preferences (from Profile)
-- Writes: Updated goals or preferences if discovered via dialogue; creates/updates action plans if user confirms in-dialog
-- Triggers: When a plan is generated, a conversation can present what-if scenarios and explanations before confirmation of changes.
+- **Reads:** Snapshot, Goals, Persona hints, Preferences (from Profile)
+- **Writes:** Updated goals or preferences if discovered via dialogue; creates/updates action plans if user confirms in-dialog
+- **Triggers:** When a plan is generated, conversation can present what-if scenarios via `/chat/message`
+- **Implementation:** See `backend/app/api/v0/routers/chat.py` for actual endpoints:
+  - `POST /chat/start` - Start new conversation session
+  - `POST /chat/message` - Send/receive messages
+  - `POST /chat/message/stream` - Streaming responses (SSE)
+  - `GET /chat/session/{session_id}` - Get session info
+  - `DELETE /chat/session/{session_id}` - Clear session
+  - `POST /chat/session/{session_id}/refresh` - Refresh context
+  - `GET /chat/health` - LLM health check
+
+Notes
+- This layer is the primary conduit for the PRD's conversational onboarding and adaptive coaching flows.
+- Sessions are currently in-memory only (see `conversation.py` warning comment).
+- For production, implement Redis or database persistence for sessions.
 
 Notes
 - This layer is the primary conduit for the PRD’s conversational onboarding and adaptive coaching flows. It should be explicitly referenced in architecture diagrams as a distinct layer with well-defined inputs/outputs and API-like contracts for internal services.

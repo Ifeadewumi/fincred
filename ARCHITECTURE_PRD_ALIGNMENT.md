@@ -17,28 +17,37 @@ What matches the PRD (high level)
 - Clear out-of-scope items (bank integrations, direct transfers) as per PRD
 
 Gaps to align with the PRD and fixes
-- Explicit conversational AI backbone
-  - PRD calls out natural language conversations and conversational onboarding, goal discovery, and ongoing dialogue.
-  - Gap: no explicit Dialog/LLM Layer described in the current map.
+
+- ~~Explicit conversational AI backbone~~ → **RESOLVED:** Implemented in `backend/app/api/v0/routers/chat.py`
+  - Full `/chat` endpoint suite implemented: start, message, stream, session management, health check
+  - ConversationService handles sessions, context building, and intent detection
+  - Gemini LLM provider with fallback chain support
+
 - Planning engine depth
-  - PRD requires dynamic planning with LLM-driven tradeoffs, explanations, and what-if scenarios.
-  - Gap: planning engine described but not explicitly linked to LLM-backed explanations and real-time what-if capabilities.
+  - **Status:** PARTIAL - Basic planning engine exists; LLM explanations need implementation
+  - Gap: Planning engine generates feasibility labels but not personalized LLM explanations
+  - See: `backend/app/services/planning.py` for current implementation
+
 - Persona alignment explicitness
-  - PRD targets MVP for Persona 2 (young professionals) with templates for other personas.
-  - Gap: MVP persona is not explicitly annotated in architecture map.
+  - **Status:** NOT YET ADDRESSED
+  - Gap: MVP persona not explicitly annotated in architecture
+
 - Non-functional targets
-  - PRD includes activation/engagement metrics, latency targets (~2s), uptime (>99.9%), accessibility.
-  - Gap: architecture map mentions basic observability but not explicit non-functional targets.
+  - **Status:** NOT YET ADDRESSED
+  - Gap: Architecture lacks explicit latency, uptime, and accessibility targets
+
 - Phase mapping traceability
-  - PRD describes multi-phase roadmap; architecture map should map components to phases.
-  - Gap: phase-to-component traceability is implicit, not explicit.
+  - **Status:** NOT YET ADDRESSED
+  - Gap: Phase-to-component traceability implicit, not explicit
 
 Proposed alignments (patchable changes)
-- Add a Dialog/LLM Layer to formalize conversational AI behavior and flows.
-- Extend the Planning Engine to include explicit LLM-driven tradeoffs, explanations, and what-if analyses, fed by snapshot, goals, and persona.
-- Annotate MVP persona focus in the map (Persona #2; explain how #1 and #3 are supported via templates).
-- Introduce a Non-functional Alignment box with explicit targets (activation, engagement, latency, uptime, accessibility).
-- Add Phase-to-Architecture traceability, mapping PRD phases to components.
+
+- ~~Add ARCHITECTURE_Dialog_LL_LAYER.md~~ → **COMPLETE:** Implemented with Gemini provider
+- ~~Add AI Chat endpoints to API_DESIGN.md~~ → **COMPLETE:** Added Section 12
+- **NEW:** Add LLM-enhanced planning explanations (planned in `backend/app/services/planning_explanations.py`)
+- **NEW:** Annotate MVP persona focus (Persona #2: young professionals)
+- **NEW:** Introduce Non-functional Alignment box with explicit targets
+- **NEW:** Add Phase-to-Architecture traceability, mapping PRD phases to components
 
 Implementation plan (high level)
 - Patch 1: Add ARCHITECTURE_Dialog_LL_LAYER.md to define the Layer, its interfaces, and data contracts.

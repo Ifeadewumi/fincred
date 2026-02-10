@@ -16,7 +16,8 @@ from app.schemas.user import UserCreate
 
 
 # A simple schema for returning messages
-class Message(BaseModel):
+# Renamed from Message to AuthMessage to avoid collision with app.llm.providers.base.Message
+class AuthMessage(BaseModel):
     message: str
 
 
@@ -62,7 +63,7 @@ def _validate_password(password: str) -> None:
 
 
 @router.post(
-    "/register", response_model=Message, status_code=status.HTTP_201_CREATED
+    "/register", response_model=AuthMessage, status_code=status.HTTP_201_CREATED
 )
 def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     """
@@ -70,9 +71,7 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     Creates an inactive user and sends a verification email.
     """
     normalized_email = user_in.email.lower()
-    existing_user = db.exec(
-        select(User).where(User.email == normalized_email)
-    ).first()
+    existing_user = db.exec(select(User).where(User.email == normalized_email)).first()
 
     # Mitigate user enumeration: always return a generic success-like message.
     # If the user exists and isn't verified, we can resend the email.
@@ -93,21 +92,27 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     # Use a single transaction for atomicity
     try:
         from app.core.config import settings
-        
+
         # In development, we can auto-verify users to simplify testing
         is_verified = settings.ENV == "development"
-        
+
         user = User(
             email=normalized_email,
             password_hash=hash_password(user_in.password),
-            verification_token=hash_password(verification_token) if not is_verified else None,
+            verification_token=hash_password(verification_token)
+            if not is_verified
+            else None,
             is_verified=is_verified,
         )
         db.add(user)
         db.flush()  # Use flush to get the user.id without committing
 
         # Create the associated profile in the same transaction
-        profile = Profile(user_id=user.id, full_name=user_in.full_name)
+        profile = (
+            Profile(user_id=user.id, full_name=user_in.full_name)
+            if user.id
+            else Profile(full_name=user_in.full_name)
+        )
         db.add(profile)
 
         db.commit()
@@ -192,7 +197,7 @@ class ResendVerificationRequest(BaseModel):
     email: str
 
 
-@router.post("/resend-verification", response_model=Message)
+@router.post("/resend-verification", response_model=AuthMessage)
 def resend_verification(
     request: ResendVerificationRequest,
     db: Session = Depends(get_db),
@@ -223,7 +228,7 @@ def resend_verification(
     return generic_response
 
 
-@router.post("/logout", response_model=Message)
+@router.post("/logout", response_model=AuthMessage)
 def logout():
     """
     Logs the user out.

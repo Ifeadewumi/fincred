@@ -148,10 +148,11 @@ Shortened from `FEATURE_BREAKDOWN_AND_ROADMAP.md`:
 
 1. **Foundations** – auth, profile, basic backend skeleton.
 2. **Goal planning core** – snapshot input, goal models, planning engine v1.
+   - **ENHANCED:** AI-powered explanations for feasibility labels
 3. **Action plans & commitments** – link plans to recurring actions and habit tracking.
-4. **Tracking & check‑ins** – weekly check‑ins, progress dashboard, streaks.
-5. **Nudges & summaries** – weekly email summaries & reminders.
-6. **Education & polish** – contextual micro‑content and UI/UX refinements.
+4. **AI Chat & Conversation** – conversational financial coaching (implemented).
+5. **Tracking & check‑ins** – weekly check‑ins, progress dashboard, streaks.
+6. **Nudges & summaries** – weekly email summaries & reminders.
 7. **Private beta & iteration** – onboard early users, instrument analytics, refine.
 
 ## Design references

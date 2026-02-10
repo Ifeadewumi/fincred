@@ -144,6 +144,27 @@ Optionally a separate `NotificationLog` to store each actual send event.
 - `properties` (JSON)
 - `created_at`
 
+### 14. ConversationSession (AI Chat Sessions)
+- `id`
+- `user_id` (FK User)
+- `intent` (general, onboarding, goal_discovery, planning, checkin)
+- `message_history` (JSON string - stores conversation history)
+- `created_at`
+- `updated_at`
+
+**Relationships:**
+- 1 User has many ConversationSessions
+
+### 15. ConversationMessage
+- `id`
+- `session_id` (FK ConversationSession)
+- `role` (user, assistant, system)
+- `content`
+- `created_at`
+
+**Relationships:**
+- 1 ConversationSession has many ConversationMessages
+
 ## Relationships overview
 
 High-level cardinalities:
@@ -154,17 +175,14 @@ High-level cardinalities:
 - User 1 — * Debt
 - User 1 — * SavingsAccount
 - User 1 — * Goal
+- User 1 — * ConversationSession
 - Goal 1 — * ActionPlan
 - Goal 1 — * GoalProgress
 - User 1 — * CheckIn
 - User 1 — * Notification/NudgeSchedule
 - ActionPlan 1 — * Notification/NudgeSchedule (for reminders)
+- ConversationSession 1 — * ConversationMessage
 - EducationSnippet is standalone and selected by context.
-
-Implementation notes:
-
-- Frequently queried columns (e.g., `user_id`, `goal.status`) should be indexed for performance.
-- For entities like `Goal` and `ActionPlan`, consider soft-delete flags (e.g., `status` or `deleted_at`) instead of hard deletes to preserve history.
 
 ## ASCII ERD sketch
 
@@ -181,6 +199,7 @@ User (1)
   |--(*) CheckIn
   |--(*) Notification (generic, e.g., weekly summary)
   |--(*) Event (analytics)
+  |--(*) ConversationSession ---(*) ConversationMessage
 
 EducationSnippet (independent, selected by goal_type/feasibility context)
 ```
